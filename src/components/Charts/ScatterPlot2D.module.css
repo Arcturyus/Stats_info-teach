@@ -1,0 +1,17 @@
+.container {
+  display: flex;
+  justify-content: center;
+  margin: var(--space-md) 0;
+}
+
+.svg {
+  background: var(--color-bg-card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.grid line {
+  stroke: var(--color-border);
+  stroke-opacity: 0.5;
+  stroke-dasharray: 2,2;
+}

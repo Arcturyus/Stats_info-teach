@@ -1,0 +1,12 @@
+.container {
+  display: flex;
+  justify-content: center;
+  margin: var(--space-md) 0;
+}
+
+.canvas {
+  background: var(--color-bg-card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  display: block;
+}
