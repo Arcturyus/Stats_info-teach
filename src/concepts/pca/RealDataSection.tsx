@@ -1,3 +1,4 @@
+import ComponentDetails from './ComponentDetails';
 import { useEffect, useId, useState } from 'react';
 import { interpolateYlOrRd } from 'd3';
 import MatrixDisplay from '../../components/Math/MatrixDisplay';
@@ -48,7 +49,7 @@ function ProjectionDensity({ report }: { report: RealReport }) {
             y={plot.y + (bins - j - 1) / bins * plot.height}
             width={plot.width / bins + .1} height={plot.height / bins + .1}
             fill={interpolateYlOrRd(.08 + .92 * Math.log1p(mass) / Math.log1p(max))}>
-            <title>{`${number(mass / report.sampleSize * 100, 3)} % de la masse pondérée`}</title>
+            <title>{`CP1 : ${number(bounds[0][0] + i / bins * (bounds[0][1] - bounds[0][0]), 3)} à ${number(bounds[0][0] + (i + 1) / bins * (bounds[0][1] - bounds[0][0]), 3)}\nCP2 : ${number(bounds[1][0] + j / bins * (bounds[1][1] - bounds[1][0]), 3)} à ${number(bounds[1][0] + (j + 1) / bins * (bounds[1][1] - bounds[1][0]), 3)}\n${number(mass / report.sampleSize * 100, 3)} % de la masse pondérée. Chaque cellule regroupe les observations de cet intervalle ; ce pourcentage n’est pas un effectif brut.`}</title>
           </rect>
         )))}
         <g stroke="var(--color-text-muted)" strokeDasharray="3 4" opacity=".55">
@@ -131,12 +132,12 @@ export default function RealDataSection({ datasetIndex, step }: { datasetIndex: 
           <div className={styles.chart}>
             <BlockMath math={`\\frac{${roundedEigenvalues[0]}}{${roundedEigenvalues.join(' + ')}}\\times 100\\approx ${(report.varianceExplained[0] * 100).toFixed(1)}\\%`} />
           </div>
-          <div className={styles.chart}><BarChart values={report.varianceExplained} labels={labels} yLabel="Variance expliquée" showLine={{ data: report.cumulativeVariance, label: 'Cumul' }} /></div>
+          <div className={styles.chart}><BarChart values={report.varianceExplained} barTooltip={(i) => <ComponentDetails index={i} names={report.variableNames} vector={report.eigenvectors[i]} eigenvalue={report.eigenvalues[i]} variance={report.varianceExplained[i]} cumulative={report.cumulativeVariance[i]} />} labels={labels} yLabel="Variance expliquée" showLine={{ data: report.cumulativeVariance, label: 'Cumul' }} /></div>
           <div className={styles.tableWrap}>
             <table className={styles.axes}>
               <caption>Coefficients des axes sur les variables centrées réduites Z</caption>
               <thead><tr><th scope="col">Axe</th>{report.variableNames.map((name) => <th key={name} scope="col">{name}</th>)}<th scope="col">Valeur propre λ</th><th scope="col">Variance</th></tr></thead>
-              <tbody>{report.eigenvectors.map((vector, i) => <tr key={i}><th scope="row">CP{i + 1}</th>{vector.map((value, j) => <td key={j}>{number(value, 3)}</td>)}<td>{number(report.eigenvalues[i], 3)}</td><td>{number(report.varianceExplained[i] * 100)} %</td></tr>)}</tbody>
+              <tbody>{report.eigenvectors.map((vector, i) => <tr key={i}><th scope="row">CP{i + 1}</th>{vector.map((value, j) => <td key={j} title={`Coefficient de ${report.variableNames[j]} dans CP${i + 1} : ${number(value, 6)}. Multiplier ce coefficient par la variable centrée réduite Z${j + 1}.`}>{number(value, 3)}</td>)}<td>{number(report.eigenvalues[i], 3)}</td><td>{number(report.varianceExplained[i] * 100)} %</td></tr>)}</tbody>
             </table>
           </div>
           <div className={styles.formulas}>{report.eigenvectors.map((vector, i) => (

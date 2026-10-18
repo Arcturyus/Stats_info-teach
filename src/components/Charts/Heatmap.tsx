@@ -1,3 +1,4 @@
+import { useChartTooltip } from './useChartTooltip';
 import * as d3 from 'd3';
 import styles from './Heatmap.module.css';
 
@@ -24,10 +25,12 @@ function textColor(background: string): string {
 }
 
 export default function Heatmap({ matrix, labels, width = 480, precision = 3 }: HeatmapProps) {
+  const { id, show, hide, tooltip } = useChartTooltip(matrix);
   if (matrix.length === 0) return null;
 
   return (
     <figure className={styles.container} style={{ maxWidth: width }}>
+      {tooltip}
       <table className={styles.matrix} aria-label="Heatmap des corrélations" lang="fr">
         <colgroup>
           <col style={{ width: '30%' }} />
@@ -52,7 +55,13 @@ export default function Heatmap({ matrix, labels, width = 480, precision = 3 }: 
                     <div
                       className={styles.value}
                       style={{ background, color: textColor(background) }}
-                      title={`${labels[i]} / ${labels[j]} : ${value.toFixed(precision)}`}
+                      tabIndex={0}
+                      aria-label={`${labels[i]} / ${labels[j]} : ${value.toFixed(6)}`}
+                      aria-describedby={id}
+                      onMouseMove={(event) => show(event.clientX, event.clientY, <><strong>{labels[i]} × {labels[j]}</strong><p>R[{i + 1}, {j + 1}] = {value.toFixed(6)}</p><p>{i === j ? 'Corrélation d’une variable avec elle-même : 1.' : value > 0 ? 'Liaison linéaire positive : les valeurs tendent à augmenter ensemble.' : value < 0 ? 'Liaison linéaire négative : quand l’une augmente, l’autre tend à diminuer.' : 'Aucune liaison linéaire dans cet échantillon.'}</p><p>Échelle de couleur fixe : −1 à +1. Une corrélation ne prouve pas une causalité.</p></>)}
+                      onMouseLeave={hide}
+                      onFocus={(event) => { const box = event.currentTarget.getBoundingClientRect(); show(box.x, box.y, <><strong>{labels[i]} × {labels[j]}</strong><p>R[{i + 1}, {j + 1}] = {value.toFixed(6)}</p><p>Corrélation linéaire ; échelle fixe de −1 à +1.</p></>); }}
+                      onBlur={hide}
                     >
                       {value.toFixed(precision)}
                     </div>

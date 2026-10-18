@@ -1,3 +1,4 @@
+import PointDetails from '../PointDetails';
 import { BlockMath } from '../../../components/Math/KatexRenderer';
 import EditableTable from '../../../components/EditableTable/EditableTable';
 import ScatterPlot2D from '../../../components/Charts/ScatterPlot2D';
@@ -7,11 +8,12 @@ import type { PcaResult } from '../types';
 import styles from './Steps.module.css';
 
 interface Props {
+  rawData: number[][];
   variableNames: string[];
   result: PcaResult;
 }
 
-export default function StepCentered({ variableNames, result }: Props) {
+export default function StepCentered({ rawData, variableNames, result }: Props) {
   const is2D = variableNames.length === 2;
   const is3D = variableNames.length >= 3;
 
@@ -49,6 +51,7 @@ export default function StepCentered({ variableNames, result }: Props) {
             <h3>Donnees centrees</h3>
             <ScatterPlot2D
               points={result.centeredData}
+              pointTooltip={(index) => <PointDetails index={index} names={variableNames} raw={rawData[index]} result={result} stage="centered" />}
               xLabel={variableNames[0]}
               yLabel={variableNames[1]}
               originCenter
@@ -61,6 +64,7 @@ export default function StepCentered({ variableNames, result }: Props) {
             <h3>Donnees centrees (3D)</h3>
             <ScatterPlot3D
               points={result.centeredData}
+              pointTooltip={(index) => <PointDetails index={index} names={variableNames} raw={rawData[index]} result={result} stage="centered" />}
               xLabel={variableNames[0]}
               yLabel={variableNames[1]}
               zLabel={variableNames[2]}

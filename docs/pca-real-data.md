@@ -45,3 +45,8 @@ La projection utilise tous les individus : grille de densité 56 × 56 sur CP1 e
 Le script vérifie l’unicité des identifiants, la symétrie et la diagonale de R, la positivité des valeurs propres, l’orthonormalité des axes, la reconstruction de R, la somme des parts de variance et la conservation de la masse de la projection. Les moyennes INCA3 obtenues (168,764 cm et 73,618 kg) concordent avec les arrondis du rapport Anses (168,8 cm et 73,6 kg).
 
 Résultats de référence : INCA3 r = 0,476964, CP1 = 73,8482 %. PISA r maths/sciences = 0,891427, maths/écrit = 0,843779, sciences/écrit = 0,853090 ; CP1 = 90,8566 %, CP1+CP2 = 96,3980 %.
+
+
+### Infobulles pédagogiques
+
+Les nuages de l’échantillon affichent au survol et au clavier le numéro de ligne du tableau (pas un identifiant de l’enquête), les valeurs initiales et les coordonnées centrées ou réduites. Les vues des axes et des projections détaillent aussi chaque score CP comme somme des produits des coordonnées Z par les coefficients de l’axe. Les coefficients, valeurs propres, parts de variance et cumuls sont accessibles sur les flèches et l’éboulis, pour l’échantillon comme pour les données complètes. Les cellules de corrélation donnent la valeur à six décimales et le sens de la liaison ; les cellules de densité donnent les intervalles CP1/CP2 et leur masse pondérée, sans les présenter comme un individu. Les détails longs peuvent défiler dans l’infobulle ; Échap les ferme.

@@ -1,5 +1,6 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useId, type ReactNode } from 'react';
 import * as d3 from 'd3';
+import { useChartTooltip } from './useChartTooltip';
 import styles from './ScatterPlot2D.module.css';
 
 export interface Arrow {
@@ -7,10 +8,14 @@ export interface Arrow {
   dy: number;
   label?: string;
   color?: string;
+  tooltip?: ReactNode;
 }
+
+const EMPTY_ARROWS: Arrow[] = [];
 
 interface ScatterPlot2DProps {
   points: number[][];
+  pointTooltip?: (index: number) => ReactNode;
   xLabel?: string;
   yLabel?: string;
   arrows?: Arrow[];
@@ -23,15 +28,18 @@ interface ScatterPlot2DProps {
 
 export default function ScatterPlot2D({
   points,
+  pointTooltip,
   xLabel = 'X₁',
   yLabel = 'X₂',
-  arrows = [],
+  arrows = EMPTY_ARROWS,
   width = 500,
   height = 400,
   colors,
   showGrid = true,
   originCenter = false,
 }: ScatterPlot2DProps) {
+  const markerId = useId().replace(/:/g, "");
+  const { id, show, hide, tooltip } = useChartTooltip(points);
   const svgRef = useRef<SVGSVGElement>(null);
   const margin = { top: 20, right: 30, bottom: 45, left: 55 };
   const innerW = width - margin.left - margin.right;
@@ -145,7 +153,7 @@ export default function ScatterPlot2D({
       const arrowColor = arrow.color || '#ef4444';
       defs
         .append('marker')
-        .attr('id', `arrowhead-${i}`)
+        .attr('id', `${markerId}-arrowhead-${i}`)
         .attr('viewBox', '0 0 10 10')
         .attr('refX', 8)
         .attr('refY', 5)
@@ -163,7 +171,14 @@ export default function ScatterPlot2D({
         .attr('y2', yScale(arrow.dy))
         .attr('stroke', arrowColor)
         .attr('stroke-width', 2.5)
-        .attr('marker-end', `url(#arrowhead-${i})`);
+        .attr('marker-end', `url(#${markerId}-arrowhead-${i})`)
+        .attr('tabindex', 0)
+        .attr('aria-label', arrow.label ?? 'Axe principal')
+        .attr('aria-describedby', id)
+        .on('mousemove', (event: MouseEvent) => show(event.clientX, event.clientY, arrow.tooltip ?? arrow.label))
+        .on('mouseleave', hide)
+        .on('focus', function () { const box = this.getBoundingClientRect(); show(box.x + box.width / 2, box.y + box.height / 2, arrow.tooltip ?? arrow.label); })
+        .on('blur', hide);
 
       if (arrow.label) {
         g.append('text')
@@ -177,7 +192,7 @@ export default function ScatterPlot2D({
     });
 
     // Points
-    g.selectAll('circle')
+    g.selectAll<SVGCircleElement, number[]>('circle')
       .data(points)
       .join('circle')
       .attr('cx', (d) => xScale(d[0]))
@@ -186,11 +201,19 @@ export default function ScatterPlot2D({
       .attr('fill', (_, i) => (colors ? colors[i % colors.length] : 'var(--color-primary)'))
       .attr('fill-opacity', 0.8)
       .attr('stroke', 'white')
-      .attr('stroke-width', 1.5);
-  }, [points, arrows, width, height, xLabel, yLabel, colors, showGrid, originCenter, innerW, innerH, margin.left, margin.top]);
+      .attr('stroke-width', 1.5)
+      .attr('tabindex', 0)
+      .attr('aria-label', (d, i) => `Individu n° ${i + 1}, ${xLabel} : ${d[0]}, ${yLabel} : ${d[1]}`)
+      .attr('aria-describedby', id)
+      .on('mousemove', (event: MouseEvent, d) => { const i = points.indexOf(d); show(event.clientX, event.clientY, pointTooltip?.(i) ?? <><strong>Individu n° {i + 1}</strong><p>{xLabel} : {d[0].toFixed(3)}<br />{yLabel} : {d[1].toFixed(3)}</p></>); })
+      .on('mouseleave', hide)
+      .on('focus', function (_, d) { const box = this.getBoundingClientRect(); const i = points.indexOf(d); show(box.x, box.y, pointTooltip?.(i) ?? `Individu n° ${i + 1} : ${d.map(v => v.toFixed(3)).join(' ; ')}`); })
+      .on('blur', hide);
+  }, [points, arrows, width, height, xLabel, yLabel, colors, showGrid, originCenter, innerW, innerH, margin.left, margin.top, pointTooltip, id, show, hide, markerId]);
 
   return (
     <div className={styles.container}>
+      {tooltip}
       <svg ref={svgRef} width={width} height={height} className={styles.svg} />
     </div>
   );

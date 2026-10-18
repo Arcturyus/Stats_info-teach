@@ -44,15 +44,15 @@ export function Component() {
 
     switch (pca.step) {
       case 1:
-        return <StepCentered variableNames={pca.variableNames} result={pca.result} />;
+        return <StepCentered rawData={pca.rawData} variableNames={pca.variableNames} result={pca.result} />;
       case 2:
-        return <StepNormalized variableNames={pca.variableNames} result={pca.result} />;
+        return <StepNormalized rawData={pca.rawData} variableNames={pca.variableNames} result={pca.result} />;
       case 3:
         return <StepCorrelation variableNames={pca.variableNames} result={pca.result} />;
       case 4:
-        return <StepEigen variableNames={pca.variableNames} result={pca.result} />;
+        return <StepEigen rawData={pca.rawData} variableNames={pca.variableNames} result={pca.result} />;
       case 5:
-        return <StepProjection variableNames={pca.variableNames} result={pca.result} />;
+        return <StepProjection rawData={pca.rawData} variableNames={pca.variableNames} result={pca.result} />;
       default:
         return null;
     }

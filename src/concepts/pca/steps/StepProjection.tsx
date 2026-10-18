@@ -1,3 +1,4 @@
+import PointDetails from '../PointDetails';
 import { BlockMath } from '../../../components/Math/KatexRenderer';
 import ScatterPlot2D from '../../../components/Charts/ScatterPlot2D';
 import ScatterPlot3D from '../../../components/Charts/ScatterPlot3D';
@@ -7,11 +8,12 @@ import type { PcaResult } from '../types';
 import styles from './Steps.module.css';
 
 interface Props {
+  rawData: number[][];
   variableNames: string[];
   result: PcaResult;
 }
 
-export default function StepProjection({ variableNames, result }: Props) {
+export default function StepProjection({ rawData, variableNames, result }: Props) {
   const is2D = variableNames.length === 2;
   const k = result.projectedData[0]?.length ?? 0;
 
@@ -65,6 +67,7 @@ export default function StepProjection({ variableNames, result }: Props) {
           {k >= 2 ? (
             <ScatterPlot2D
               points={points2D}
+              pointTooltip={(index) => <PointDetails index={index} names={variableNames} raw={rawData[index]} result={result} stage="projection" />}
               xLabel="CP1"
               yLabel="CP2"
               originCenter
@@ -83,6 +86,7 @@ export default function StepProjection({ variableNames, result }: Props) {
           <div className={styles.chartSection}>
             <ScatterPlot3D
               points={result.projectedData}
+              pointTooltip={(index) => <PointDetails index={index} names={variableNames} raw={rawData[index]} result={result} stage="projection" />}
               xLabel="CP1"
               yLabel="CP2"
               zLabel="CP3"
@@ -99,6 +103,7 @@ export default function StepProjection({ variableNames, result }: Props) {
               <h4>Donnees originales (normalisees)</h4>
               <ScatterPlot2D
                 points={result.normalizedData}
+              pointTooltip={(index) => <PointDetails index={index} names={variableNames} raw={rawData[index]} result={result} stage="projection" />}
                 xLabel={variableNames[0]}
                 yLabel={variableNames[1]}
                 originCenter
@@ -108,6 +113,7 @@ export default function StepProjection({ variableNames, result }: Props) {
               <h4>Apres projection (composantes principales)</h4>
               <ScatterPlot2D
                 points={points2D}
+              pointTooltip={(index) => <PointDetails index={index} names={variableNames} raw={rawData[index]} result={result} stage="projection" />}
                 xLabel="CP1"
                 yLabel="CP2"
                 originCenter

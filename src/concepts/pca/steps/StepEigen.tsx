@@ -1,3 +1,5 @@
+import ComponentDetails from '../ComponentDetails';
+import PointDetails from '../PointDetails';
 import { BlockMath } from '../../../components/Math/KatexRenderer';
 import ScatterPlot2D, { type Arrow } from '../../../components/Charts/ScatterPlot2D';
 import ScatterPlot3D, { type Arrow3D } from '../../../components/Charts/ScatterPlot3D';
@@ -7,13 +9,14 @@ import type { PcaResult } from '../types';
 import styles from './Steps.module.css';
 
 interface Props {
+  rawData: number[][];
   variableNames: string[];
   result: PcaResult;
 }
 
 const ARROW_COLORS = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b'];
 
-export default function StepEigen({ variableNames, result }: Props) {
+export default function StepEigen({ rawData, variableNames, result }: Props) {
   const is2D = variableNames.length === 2;
   const is3D = variableNames.length >= 3;
   const componentLabels = result.eigenvalues.map((_, i) => `CP${i + 1}`);
@@ -22,11 +25,12 @@ export default function StepEigen({ variableNames, result }: Props) {
   // Build arrows for eigenvectors (scaled by sqrt(eigenvalue) for visibility)
   const arrows2D: Arrow[] = is2D
     ? result.eigenvectors.map((vec, i) => {
-        const scale = Math.sqrt(result.eigenvalues[i]) * 1.5;
+        const scale = Math.sqrt(Math.max(0, result.eigenvalues[i])) * 1.5;
         return {
           dx: vec[0] * scale,
           dy: vec[1] * scale,
           label: `CP${i + 1}`,
+          tooltip: <ComponentDetails index={i} names={variableNames} vector={vec} eigenvalue={result.eigenvalues[i]} variance={result.varianceExplained[i]} cumulative={result.cumulativeVariance[i]} arrow />,
           color: ARROW_COLORS[i],
         };
       })
@@ -34,12 +38,13 @@ export default function StepEigen({ variableNames, result }: Props) {
 
   const arrows3D: Arrow3D[] = is3D
     ? result.eigenvectors.map((vec, i) => {
-        const scale = Math.sqrt(result.eigenvalues[i]) * 1.5;
+        const scale = Math.sqrt(Math.max(0, result.eigenvalues[i])) * 1.5;
         return {
           dx: vec[0] * scale,
           dy: vec[1] * scale,
           dz: vec[2] * scale,
           label: `CP${i + 1}`,
+          tooltip: <ComponentDetails index={i} names={variableNames} vector={vec} eigenvalue={result.eigenvalues[i]} variance={result.varianceExplained[i]} cumulative={result.cumulativeVariance[i]} arrow />,
           color: ARROW_COLORS[i % ARROW_COLORS.length],
         };
       })
@@ -68,7 +73,7 @@ export default function StepEigen({ variableNames, result }: Props) {
 
       <div className={styles.eigenGrid}>
         {result.eigenvectors.map((vec, i) => (
-          <div key={i} className={styles.eigenCard}>
+          <div key={i} className={styles.eigenCard} title={`CP${i + 1} : combinaison des variables réduites. Coefficients : ${vec.map((v, j) => `${variableNames[j]} : ${v.toFixed(4)}`).join('; ')}. Cumul : ${(result.cumulativeVariance[i] * 100).toFixed(2)} %. Le signe global peut être inversé.`}>
             <h4 style={{ color: ARROW_COLORS[i] }}>
               Composante {i + 1} — {'\u03BB'}{i + 1} = {result.eigenvalues[i].toFixed(3)}
               {' '}({(result.varianceExplained[i] * 100).toFixed(1)}%)
@@ -88,6 +93,7 @@ export default function StepEigen({ variableNames, result }: Props) {
           <h3>Eboulis des valeurs propres (Scree plot)</h3>
           <BarChart
             values={result.varianceExplained}
+            barTooltip={(i) => <ComponentDetails index={i} names={variableNames} vector={result.eigenvectors[i]} eigenvalue={result.eigenvalues[i]} variance={result.varianceExplained[i]} cumulative={result.cumulativeVariance[i]} />}
             labels={componentLabels}
             yLabel="% variance"
             showLine={{ data: result.cumulativeVariance, label: 'Cumul' }}
@@ -99,6 +105,7 @@ export default function StepEigen({ variableNames, result }: Props) {
             <h3>Axes propres sur les donnees normalisees</h3>
             <ScatterPlot2D
               points={result.normalizedData}
+              pointTooltip={(index) => <PointDetails index={index} names={variableNames} raw={rawData[index]} result={result} stage="projection" />}
               xLabel={variableNames[0]}
               yLabel={variableNames[1]}
               arrows={arrows2D}
@@ -112,6 +119,7 @@ export default function StepEigen({ variableNames, result }: Props) {
             <h3>Axes propres (3D)</h3>
             <ScatterPlot3D
               points={result.normalizedData}
+              pointTooltip={(index) => <PointDetails index={index} names={variableNames} raw={rawData[index]} result={result} stage="projection" />}
               xLabel={variableNames[0]}
               yLabel={variableNames[1]}
               zLabel={variableNames[2]}

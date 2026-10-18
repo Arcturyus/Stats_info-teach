@@ -1,3 +1,4 @@
+import PointDetails from '../PointDetails';
 import { BlockMath } from '../../../components/Math/KatexRenderer';
 import EditableTable from '../../../components/EditableTable/EditableTable';
 import ScatterPlot2D from '../../../components/Charts/ScatterPlot2D';
@@ -53,6 +54,7 @@ export default function StepRawData({ rawData, variableNames, onDataChange, onDr
             <h3>Nuage de points</h3>
             <ScatterPlot2D
               points={rawData}
+              pointTooltip={(index) => <PointDetails index={index} names={variableNames} raw={rawData[index]} />}
               xLabel={variableNames[0]}
               yLabel={variableNames[1]}
             />
@@ -64,6 +66,7 @@ export default function StepRawData({ rawData, variableNames, onDataChange, onDr
             <h3>Nuage de points 3D</h3>
             <ScatterPlot3D
               points={rawData}
+              pointTooltip={(index) => <PointDetails index={index} names={variableNames} raw={rawData[index]} />}
               xLabel={variableNames[0]}
               yLabel={variableNames[1]}
               zLabel={variableNames[2]}
