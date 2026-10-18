@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react';
-import type { PcaDataset, PcaResult } from './types';
+import { useState, useMemo, useEffect } from 'react';
+import type { PcaResult } from './types';
+import { sampleSurvey, type SurveySample } from './sampleSurvey';
 import {
   computeMeans,
   centerData,
@@ -14,16 +15,38 @@ import {
 import { DATASETS } from './constants';
 
 export function usePca() {
-  const [datasetIndex, setDatasetIndex] = useState(0);
-  const [rawData, setRawData] = useState<number[][]>(DATASETS[0].data);
-  const [variableNames, setVariableNames] = useState<string[]>(DATASETS[0].variableNames);
+  const [request, setRequest] = useState({ datasetIndex: 0, version: 0 });
+  const [outcome, setOutcome] = useState<{
+    request: typeof request;
+    sample?: SurveySample;
+    error?: string;
+    edited: boolean;
+  } | null>(null);
   const [step, setStep] = useState(0);
+  const datasetIndex = request.datasetIndex;
+  const variableNames = DATASETS[datasetIndex].variableNames;
+  const current = outcome?.request === request ? outcome : null;
+  const rawData = useMemo(() => current?.sample?.data ?? [], [current]);
+  const loading = !current;
+
+  useEffect(() => {
+    let cancelled = false;
+    sampleSurvey(DATASETS[request.datasetIndex].id).then(
+      (sample) => { if (!cancelled) setOutcome({ request, sample, edited: false }); },
+      () => { if (!cancelled) setOutcome({ request, error: 'Le tirage n’a pas pu être chargé. Réessayez.', edited: false }); },
+    );
+    return () => { cancelled = true; };
+  }, [request]);
+
+  const setRawData = (data: number[][]) => setOutcome((previous) =>
+    previous?.request === request && previous.sample
+      ? { ...previous, sample: { ...previous.sample, data }, edited: true } : previous);
+
+  const drawSample = () => setRequest((previous) => ({ ...previous, version: previous.version + 1 }));
 
   const selectDataset = (index: number) => {
-    const ds: PcaDataset = DATASETS[index];
-    setDatasetIndex(index);
-    setRawData(ds.data.map((row) => [...row]));
-    setVariableNames([...ds.variableNames]);
+    if (!DATASETS[index]) return;
+    setRequest((previous) => ({ datasetIndex: index, version: previous.version + 1 }));
     setStep(0);
   };
 
@@ -66,8 +89,12 @@ export function usePca() {
     step,
     result,
     setRawData,
-    setVariableNames,
     setStep,
     selectDataset,
+    drawSample,
+    loading,
+    sampleError: current?.error,
+    sampleInfo: current?.sample,
+    edited: current?.edited ?? false,
   };
 }

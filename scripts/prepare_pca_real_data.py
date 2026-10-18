@@ -2,7 +2,8 @@
 
 Run: python -m pip install -r scripts/requirements-pca.txt
      python scripts/prepare_pca_real_data.py
-Raw downloads stay in .cache/pca; no individual records are published.
+Raw downloads stay in .cache/pca. Sampling assets contain only the selected
+measurements/scores, without identifiers, weights or other survey attributes.
 """
 from pathlib import Path
 from urllib.request import urlopen
@@ -23,6 +24,9 @@ OUT = ROOT / 'public/data/pca'
 OUT.mkdir(parents=True, exist_ok=True)
 INCA_URL = 'https://static.data.gouv.fr/resources/donnees-de-consommations-et-habitudes-alimentaires-de-letude-inca-3/20191217-184957/description-indiv.csv'
 PISA_URL = 'https://webfs.oecd.org/pisa2022/STU_QQQ_SPSS.zip'
+SAMPLING = OUT / 'samples'
+SAMPLING.mkdir(parents=True, exist_ok=True)
+sampling_manifest = {}
 
 
 def download(url, name):
@@ -51,7 +55,31 @@ def moments(x, w):
     return mean, sd, r, centered / sd
 
 
+def sampling_assets(identifier, samples):
+    """Export survey precision. Row order is shared across plausible values."""
+    files = []
+    for i, sample in enumerate(samples):
+        if identifier == 'inca3':
+            # The CSV preserves Float32 artefacts, e.g. 71.80000305175781 kg.
+            # All retained values are within 0.00002 of their recorded tenth.
+            rounded = np.round(sample, 1)
+            assert np.allclose(rounded, sample, rtol=0, atol=2e-5)
+            sample = rounded
+        scaled = np.rint(sample * 1000)
+        assert np.allclose(scaled / 1000, sample, rtol=0, atol=1e-9)
+        assert np.all(np.isfinite(scaled))
+        assert np.max(np.abs(scaled)) < np.iinfo(np.int32).max
+        name = f'{identifier}-{i + 1}.i32'
+        (SAMPLING / name).write_bytes(scaled.astype('<i4').tobytes(order='C'))
+        files.append(name)
+    sampling_manifest[identifier] = {
+        'count': len(samples[0]), 'columns': samples[0].shape[1],
+        'scale': 1000, 'encoding': 'int32-le', 'files': files,
+    }
+
+
 def aggregate(metadata, samples, weights):
+    sampling_assets(metadata['id'], samples)
     # Each PISA plausible value is analysed separately, never averaged per pupil.
     stats = [moments(x, weights) for x in samples]
     r = np.mean([s[2] for s in stats], axis=0)
@@ -175,3 +203,5 @@ def pisa():
 if __name__ == '__main__':
     inca()
     pisa()
+    (SAMPLING / 'manifest.json').write_text(
+        json.dumps(sampling_manifest, indent=2) + '\n', encoding='utf8')

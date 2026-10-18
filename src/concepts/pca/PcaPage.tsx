@@ -26,6 +26,8 @@ export function Component() {
   const selectedDataset = DATASETS[pca.datasetIndex]!;
 
   const renderStep = () => {
+    if (pca.loading) return <p role="status">Tirage de dix personnes en cours…</p>;
+    if (pca.sampleError) return <p role="alert" className={styles.error}>{pca.sampleError}</p>;
     if (!pca.result) {
       return (
         <div className={styles.error}>
@@ -73,8 +75,9 @@ export function Component() {
       </div>
 
       <div className={styles.datasetSelector}>
-        <label>Jeu de donnees :</label>
+        <label htmlFor="pca-dataset">Jeu de données :</label>
         <select
+          id="pca-dataset"
           value={pca.datasetIndex}
           onChange={(e) => pca.selectDataset(Number(e.target.value))}
         >
@@ -84,12 +87,18 @@ export function Component() {
             </option>
           ))}
         </select>
+        <button type="button" className={styles.sampleButton} onClick={pca.drawSample} disabled={pca.loading}>
+          {pca.loading ? 'Tirage en cours…' : 'Piocher 10 personnes au hasard'}
+        </button>
         <p className={styles.datasetDesc}>
-          {selectedDataset.description}{' '}
+          {pca.edited ? 'Échantillon modifié à partir des données de ' : 'Dix personnes tirées au hasard dans '}
           <a href={selectedDataset.source.url} target="_blank" rel="noopener noreferrer">
             {selectedDataset.source.label}
-          </a>.
+          </a>
+          {pca.sampleInfo && <> · {pca.sampleInfo.populationSize.toLocaleString('fr-FR')} {pca.datasetIndex === 0 ? 'adultes' : 'élèves'}</>}.
         </p>
+        {pca.sampleInfo?.plausibleValue && <p className={styles.sampleNote}>Scores en points PISA · jeu de valeurs plausibles n° {pca.sampleInfo.plausibleValue}, tiré au hasard.</p>}
+        <p className={styles.sampleNote}>Tirage uniforme sans remise · ACP des dix personnes sans pondération. Enquête complète aux étapes 4 à 6.</p>
       </div>
 
       <StepNavigator

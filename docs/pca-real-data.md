@@ -1,6 +1,6 @@
 # ACP sur les données individuelles
 
-Les étapes 4, 5 et 6 affichent, après l’exemple pédagogique, des résultats calculés sur les fichiers individuels officiels. Ces résultats fixes sont indépendants des dix lignes éditables.
+Les dix lignes éditables proviennent désormais d’un tirage aléatoire dans les données individuelles officielles. Les étapes 4, 5 et 6 affichent ensuite les résultats calculés sur les enquêtes complètes. Ces résultats fixes sont indépendants du tirage et des modifications du tableau.
 
 ## Reproduction
 
@@ -9,7 +9,15 @@ python -m pip install -r scripts/requirements-pca.txt
 python scripts/prepare_pca_real_data.py
 ```
 
-Le script télécharge les fichiers dans `.cache/pca` (ignoré par Git). Le fichier élèves PISA compressé représente environ 682 Mo et son extraction nécessite plusieurs Go libres. Seuls `public/data/pca/inca3.json` et `pisa2022.json`, contenant les résultats agrégés, sont embarqués dans le site. Les identifiants et lignes individuelles ne sont pas publiés. Chaque sortie conserve l’URL, le SHA-256 de la source et les effectifs exclus.
+Le script télécharge les fichiers dans `.cache/pca` (ignoré par Git). Le fichier élèves PISA compressé représente environ 682 Mo et son extraction nécessite plusieurs Go libres. `public/data/pca/inca3.json` et `pisa2022.json` contiennent les résultats agrégés. Chaque sortie conserve l’URL, le SHA-256 de la source et les effectifs exclus.
+
+## Tirage interactif
+
+Les fichiers de `public/data/pca/samples/` contiennent uniquement les deux mesures INCA3 ou les trois scores PISA nécessaires au tableau. Aucun identifiant, pays, poids d’enquête ou autre attribut individuel n’est embarqué. Les valeurs sont stockées en Int32 little endian, multipliées par 1 000. Les mesures INCA3 sont rétablies au dixième (25 152 octets) : toutes les valeurs du CSV sont à moins de 0,00002 de ce dixième ; ceci retire les artefacts de représentation Float32 tels que 71,800003 kg. Les trois décimales des scores PISA sont conservées exactement, vérification faite lors de l’export. Chaque fichier PISA représente 7 364 928 octets ; seul celui de la valeur plausible choisie est chargé. Le manifeste décrit l’effectif, l’encodage et les dimensions.
+
+À l’ouverture de la page, au changement d’enquête et à chaque clic sur « Piocher 10 personnes au hasard », dix indices distincts sont tirés uniformément parmi les 3 144 adultes ou 613 744 élèves retenus. Le générateur est `crypto.getRandomValues`, sans graine fournie par l’application ni persistance d’un tirage. Le rejet des entiers excédentaires évite le biais du modulo. Deux personnes ayant les mêmes mesures restent deux observations différentes ; aucune sélection ne force une corrélation particulière. Les dix observations sont équipondérées pour la démonstration.
+
+PISA : on tire uniformément un numéro entre 1 et 10 pour choisir un jeu officiel de valeurs plausibles, commun aux dix élèves et aux trois domaines. On ne combine pas les domaines de jeux différents et on ne calcule pas de moyenne individuelle des dix estimations. Le numéro du jeu est indiqué dans l’interface ; les valeurs sont des points PISA, pas des notes sur 20. Trois fichiers au maximum sont conservés en mémoire. Les échecs de chargement peuvent être relancés par le bouton, sans revenir à des données fictives. Les lignes restent éditables ; une modification est signalée près de la source.
 
 ## Sources et populations
 

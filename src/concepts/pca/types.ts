@@ -1,8 +1,7 @@
 export interface PcaDataset {
+  id: 'inca3' | 'pisa2022';
   name: string;
-  description: string;
   variableNames: string[];
-  data: number[][];
   source: { label: string; url: string };
 }
 

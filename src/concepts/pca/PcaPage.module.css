@@ -39,6 +39,20 @@
   color: var(--color-primary);
 }
 
+.sampleButton {
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-sm);
+  background: var(--color-primary);
+  color: white;
+  font: inherit;
+  cursor: pointer;
+}
+.sampleButton:disabled { opacity: .6; cursor: wait; }
+.sampleButton:focus-visible { outline: 2px solid var(--color-text); outline-offset: 3px; }
+.sampleNote { flex-basis: 100%; color: var(--color-text-muted); font-size: var(--font-size-sm); margin: 0; }
+.datasetSelector select { max-width: 100%; }
+
 .historyNote {
   font-size: var(--font-size-sm);
   color: var(--color-text-muted);
