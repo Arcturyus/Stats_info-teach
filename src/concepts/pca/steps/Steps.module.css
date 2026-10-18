@@ -73,7 +73,6 @@
 .correlationCalculation { font-size: var(--font-size-sm); line-height: 1.65; }
 .correlationCalculation h4 { margin: var(--space-lg) 0 var(--space-sm); color: var(--color-text-heading); }
 .correlationCalculation p { margin-bottom: var(--space-sm); }
-.correlationCalculation summary { color: var(--color-primary); cursor: pointer; margin-top: var(--space-md); }
 .calculationFormula { max-width: 100%; overflow-x: auto; padding: var(--space-sm) 0; }
 
 .dataHeader { display: flex; align-items: center; gap: var(--space-lg); flex-wrap: wrap; margin-bottom: var(--space-md); }

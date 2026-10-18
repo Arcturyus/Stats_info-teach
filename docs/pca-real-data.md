@@ -28,7 +28,7 @@ On ne combine pas les domaines de jeux différents et on ne calcule pas de moyen
 
 ## Calcul
 
-L’étape 4 détaille aussi le calcul sur l’échantillon courant dans la colonne à gauche de la heatmap : matrices Zᵀ et Z écrites avec les termes centrés X̃ᵢⱼ/σⱼ, écarts-types numériques, substitution numérique dépliable, produit ZᵀZ puis division par n pour obtenir R. Le coefficient R₁₂ est développé comme exemple. Au-delà de quatre personnes, les matrices et la somme affichent les deux premières personnes et la dernière, séparées par des points de suspension ; les calculs utilisent toujours toutes les personnes et la précision complète. Un tirage comportant une variable constante est signalé car la corrélation correspondante n’est pas définie.
+L’étape 4 montre une chaîne de calcul dans la colonne à gauche de la heatmap : ZᵀZ = produit des deux matrices symboliques en X̃ᵢⱼ/σⱼ ≈ produit des deux matrices numériques ≈ résultat numérique du produit. R est affichée juste après, sans décomposition supplémentaire de la division par n. Au-delà de quatre personnes, les matrices affichent les deux premières personnes et la dernière, séparées par des points de suspension ; les calculs utilisent toujours toutes les personnes et la précision complète. Un tirage comportant une variable constante est signalé car la corrélation correspondante n’est pas définie.
 
 L’étape 5 explicite le pourcentage de variance par composante : λᵢ / somme(λ) × 100. Chaque carte substitue les valeurs propres du tirage courant dans cette fraction et affiche le pourcentage obtenu, calculé avant les arrondis d’affichage. La section sur l’enquête complète montre également la substitution numérique pour CP1.
 
