@@ -69,12 +69,21 @@ def sampling_assets(identifier, samples):
         assert np.allclose(scaled / 1000, sample, rtol=0, atol=1e-9)
         assert np.all(np.isfinite(scaled))
         assert np.max(np.abs(scaled)) < np.iinfo(np.int32).max
-        name = f'{identifier}-{i + 1}.i32'
-        (SAMPLING / name).write_bytes(scaled.astype('<i4').tobytes(order='C'))
+        encoded = scaled.astype('<i4')
+        if identifier == 'pisa2022':
+            name = f'{identifier}-{i + 1}'
+            folder = SAMPLING / name
+            folder.mkdir(exist_ok=True)
+            for start in range(0, len(encoded), 1000):
+                (folder / f'{start // 1000:04}.i32').write_bytes(encoded[start:start + 1000].tobytes(order='C'))
+        else:
+            name = f'{identifier}-{i + 1}.i32'
+            (SAMPLING / name).write_bytes(encoded.tobytes(order='C'))
         files.append(name)
     sampling_manifest[identifier] = {
         'count': len(samples[0]), 'columns': samples[0].shape[1],
         'scale': 1000, 'encoding': 'int32-le', 'files': files,
+        **({'blockSize': 1000} if identifier == 'pisa2022' else {}),
     }
 
 

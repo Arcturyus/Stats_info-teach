@@ -14,16 +14,17 @@
     "scale": 1000,
     "encoding": "int32-le",
     "files": [
-      "pisa2022-1.i32",
-      "pisa2022-2.i32",
-      "pisa2022-3.i32",
-      "pisa2022-4.i32",
-      "pisa2022-5.i32",
-      "pisa2022-6.i32",
-      "pisa2022-7.i32",
-      "pisa2022-8.i32",
-      "pisa2022-9.i32",
-      "pisa2022-10.i32"
-    ]
+      "pisa2022-1",
+      "pisa2022-2",
+      "pisa2022-3",
+      "pisa2022-4",
+      "pisa2022-5",
+      "pisa2022-6",
+      "pisa2022-7",
+      "pisa2022-8",
+      "pisa2022-9",
+      "pisa2022-10"
+    ],
+    "blockSize": 1000
   }
 }
