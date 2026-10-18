@@ -7,6 +7,7 @@ interface EditableTableProps {
   onChange: (data: number[][]) => void;
   readOnly?: boolean;
   precision?: number;
+  columnClasses?: string[];
 }
 
 export default function EditableTable({
@@ -15,6 +16,7 @@ export default function EditableTable({
   onChange,
   readOnly = false,
   precision,
+  columnClasses,
 }: EditableTableProps) {
   const handleCellChange = useCallback(
     (rowIdx: number, colIdx: number, value: string) => {
@@ -53,7 +55,7 @@ export default function EditableTable({
           <tr>
             <th className={styles.indexCol}>#</th>
             {headers.map((h, i) => (
-              <th key={i}>{h}</th>
+              <th key={i}><span className={columnClasses?.[i]}>{h}</span></th>
             ))}
             {!readOnly && <th className={styles.actionCol}></th>}
           </tr>
@@ -63,14 +65,15 @@ export default function EditableTable({
             <tr key={ri}>
               <td className={styles.indexCol}>{ri + 1}</td>
               {row.map((cell, ci) => (
-                <td key={ci}>
+                <td key={ci} className={columnClasses?.[ci]}>
                   {readOnly ? (
-                    <span className={styles.readOnlyCell}>{formatValue(cell)}</span>
+                    <span className={styles.readOnlyCell} style={columnClasses ? { color: 'inherit', fontWeight: 'inherit' } : undefined}>{formatValue(cell)}</span>
                   ) : (
                     <input
                       type="number"
                       step="any"
                       className={styles.input}
+                      style={columnClasses ? { color: 'inherit' } : undefined}
                       value={cell}
                       onChange={(e) => handleCellChange(ri, ci, e.target.value)}
                     />

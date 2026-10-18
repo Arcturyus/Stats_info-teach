@@ -1,3 +1,4 @@
+import ColorLegend from './ColorLegend';
 import PageShell from '../../components/Layout/PageShell';
 import StepNavigator from '../../components/StepNavigator/StepNavigator';
 import { usePca } from './usePca';
@@ -100,6 +101,8 @@ export function Component() {
         currentStep={pca.step}
         onStepChange={pca.setStep}
       />
+
+      {pca.step !== 3 && <ColorLegend names={pca.variableNames} />}
 
       {pca.step > 0 && (
         <div className={styles.redrawBar}>

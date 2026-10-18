@@ -1,3 +1,4 @@
+import { quantityClass } from '../quantityColors';
 import PointDetails from '../PointDetails';
 import { BlockMath } from '../../../components/Math/KatexRenderer';
 import EditableTable from '../../../components/EditableTable/EditableTable';
@@ -44,6 +45,7 @@ export default function StepRawData({ rawData, variableNames, onDataChange, onDr
         <div className={styles.tableSection}>
           <EditableTable
             headers={variableNames}
+            columnClasses={variableNames.map((_, j) => quantityClass(j, 'x'))}
             data={rawData}
             onChange={onDataChange}
           />

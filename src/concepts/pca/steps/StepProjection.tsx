@@ -1,3 +1,4 @@
+import { axisClass, quantityClass } from '../quantityColors';
 import PointDetails from '../PointDetails';
 import { BlockMath } from '../../../components/Math/KatexRenderer';
 import ScatterPlot2D from '../../../components/Charts/ScatterPlot2D';
@@ -47,7 +48,7 @@ export default function StepProjection({ rawData, variableNames, result }: Props
 
       <div className={styles.infoBox}>
         <h4>Matrice de projection P</h4>
-        <MatrixDisplay matrix={projMatrix} label="P" precision={3} />
+        <MatrixDisplay matrix={projMatrix} cellClassName={(row) => quantityClass(row, 'coefficient')} label="P" precision={3} />
       </div>
 
       <div className={styles.splitView}>
@@ -55,6 +56,7 @@ export default function StepProjection({ rawData, variableNames, result }: Props
           <h3>Coordonnees dans le nouvel espace</h3>
           <EditableTable
             headers={cpLabels}
+            columnClasses={cpLabels.map((_, k) => axisClass(k))}
             data={result.projectedData}
             onChange={() => {}}
             readOnly

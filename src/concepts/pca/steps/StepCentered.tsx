@@ -1,3 +1,4 @@
+import { quantityClass } from '../quantityColors';
 import PointDetails from '../PointDetails';
 import { BlockMath } from '../../../components/Math/KatexRenderer';
 import EditableTable from '../../../components/EditableTable/EditableTable';
@@ -31,7 +32,7 @@ export default function StepCentered({ rawData, variableNames, result }: Props) 
 
       <div className={styles.infoBox}>
         <h4>Vecteur des moyennes</h4>
-        <VectorDisplay vector={result.means} label="\bar{X}" horizontal />
+        <VectorDisplay vector={result.means} entryClasses={variableNames.map((_, j) => quantityClass(j, 'mean'))} label="\bar{X}" horizontal />
       </div>
 
       <div className={styles.splitView}>
@@ -39,6 +40,7 @@ export default function StepCentered({ rawData, variableNames, result }: Props) 
           <h3>Matrice centree</h3>
           <EditableTable
             headers={variableNames}
+            columnClasses={variableNames.map((_, j) => quantityClass(j, 'centered'))}
             data={result.centeredData}
             onChange={() => {}}
             readOnly

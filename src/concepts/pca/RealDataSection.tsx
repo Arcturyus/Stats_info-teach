@@ -1,3 +1,6 @@
+import { Fragment } from 'react';
+import { axisClass, axisTex, quantityClass } from './quantityColors';
+import ColorLegend from './ColorLegend';
 import ComponentDetails from './ComponentDetails';
 import { useEffect, useId, useState } from 'react';
 import { interpolateYlOrRd } from 'd3';
@@ -94,11 +97,12 @@ export default function RealDataSection({ datasetIndex, step }: { datasetIndex: 
   const report = reports[id];
   if (!report || step < 1) return null;
   const labels = report.eigenvalues.map((_, i) => `CP${i + 1}`);
-  const roundedEigenvalues = report.eigenvalues.map((value) => Number(value.toFixed(3)).toFixed(3));
+  const roundedEigenvalues = report.eigenvalues.map((value, i) => axisTex(i, value.toFixed(3)));
 
   return (
     <section className={styles.section} aria-label="ACP sur les données réelles">
       <h2>Données réelles · {report.title}</h2>
+      <ColorLegend names={report.variableNames} />
       <p className={styles.population}>{report.population}</p>
       <p><strong className={styles.count}>N = {number(report.sampleSize, 0)} personnes</strong></p>
       <p>{step < 3 ? 'Statistiques pondérées calculées sur toutes les personnes retenues dans l’enquête.' : report.method}</p>
@@ -108,6 +112,7 @@ export default function RealDataSection({ datasetIndex, step }: { datasetIndex: 
           <h3>{step === 1 ? 'Vecteur des moyennes' : 'Vecteur des écarts-types'}</h3>
           <div className={styles.chart}>
             <VectorDisplay vector={step === 1 ? report.means : report.standardDeviations}
+              entryClasses={report.variableNames.map((_, j) => quantityClass(j, step === 1 ? 'mean' : 'std'))}
               label={step === 1 ? '\\bar{X}' : '\\sigma'} horizontal precision={3} />
           </div>
           <p className={styles.muted}>Ordre : {report.variableNames.join(' · ')}.</p>
@@ -130,18 +135,18 @@ export default function RealDataSection({ datasetIndex, step }: { datasetIndex: 
           <p>CP1 représente <strong>{number(report.varianceExplained[0] * 100)} %</strong> de la variance.
             {' '}Le plan CP1–CP2 en conserve <strong>{number(report.cumulativeVariance[1] * 100)} %</strong>.</p>
           <div className={styles.chart}>
-            <BlockMath math={`\\frac{${roundedEigenvalues[0]}}{${roundedEigenvalues.join(' + ')}}\\times 100\\approx ${(report.varianceExplained[0] * 100).toFixed(1)}\\%`} />
+            <BlockMath colorClasses math={`\\frac{${roundedEigenvalues[0]}}{${roundedEigenvalues.join(' + ')}}\\times 100\\approx ${axisTex(0, `${(report.varianceExplained[0] * 100).toFixed(1)}\\%`)}`} />
           </div>
           <div className={styles.chart}><BarChart values={report.varianceExplained} barTooltip={(i) => <ComponentDetails index={i} names={report.variableNames} vector={report.eigenvectors[i]} eigenvalue={report.eigenvalues[i]} variance={report.varianceExplained[i]} cumulative={report.cumulativeVariance[i]} />} labels={labels} yLabel="Variance expliquée" showLine={{ data: report.cumulativeVariance, label: 'Cumul' }} /></div>
           <div className={styles.tableWrap}>
             <table className={styles.axes}>
               <caption>Coefficients des axes sur les variables centrées réduites Z</caption>
-              <thead><tr><th scope="col">Axe</th>{report.variableNames.map((name) => <th key={name} scope="col">{name}</th>)}<th scope="col">Valeur propre λ</th><th scope="col">Variance</th></tr></thead>
-              <tbody>{report.eigenvectors.map((vector, i) => <tr key={i}><th scope="row">CP{i + 1}</th>{vector.map((value, j) => <td key={j} title={`Coefficient de ${report.variableNames[j]} dans CP${i + 1} : ${number(value, 6)}. Multiplier ce coefficient par la variable centrée réduite Z${j + 1}.`}>{number(value, 3)}</td>)}<td>{number(report.eigenvalues[i], 3)}</td><td>{number(report.varianceExplained[i] * 100)} %</td></tr>)}</tbody>
+              <thead><tr><th scope="col">Axe</th>{report.variableNames.map((name, j) => <th key={name} scope="col"><span className={quantityClass(j)}>{name}</span></th>)}<th scope="col">Valeur propre λ</th><th scope="col">Variance</th></tr></thead>
+              <tbody>{report.eigenvectors.map((vector, i) => <tr key={i}><th scope="row"><span className={axisClass(i)}>CP{i + 1}</span></th>{vector.map((value, j) => <td key={j} className={quantityClass(j, 'coefficient')} title={`Coefficient de ${report.variableNames[j]} dans CP${i + 1} : ${number(value, 6)}. Multiplier ce coefficient par la variable centrée réduite Z${j + 1}.`}>{number(value, 3)}</td>)}<td className={axisClass(i)}>{number(report.eigenvalues[i], 3)}</td><td>{number(report.varianceExplained[i] * 100)} %</td></tr>)}</tbody>
             </table>
           </div>
           <div className={styles.formulas}>{report.eigenvectors.map((vector, i) => (
-            <p key={i}><strong>CP{i + 1}</strong> = {vector.map((value, j) => `${j === 0 ? (value < 0 ? '−' : '') : (value < 0 ? ' − ' : ' + ')}${number(Math.abs(value), 3)} × Z(${report.variableNames[j]})`).join('')}</p>
+            <p key={i}><strong className={axisClass(i)}>CP{i + 1}</strong> = {vector.map((value, j) => <Fragment key={j}>{j > 0 && ' + '}(<span className={quantityClass(j, 'coefficient')}>{number(value, 3)}</span>) × <span className={quantityClass(j)}>Z({report.variableNames[j]})</span></Fragment>)}</p>
           ))}</div>
           <p className={styles.muted}>Chaque Z est la variable centrée et réduite avec les pondérations de l’enquête. Le signe global d’un axe peut être inversé sans changer l’ACP.</p>
           <ul className={styles.interpretation}>{report.axisInterpretations.map((text) => <li key={text}>{text}</li>)}</ul>

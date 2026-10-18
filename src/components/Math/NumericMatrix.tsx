@@ -4,6 +4,7 @@ interface NumericMatrixProps {
   rows: number[][];
   label?: string;
   precision?: number;
+  cellClassName?: (row: number, column: number) => string;
   orientation?: 'horizontal' | 'vertical';
 }
 
@@ -11,6 +12,7 @@ export default function NumericMatrix({
   rows,
   label,
   precision = 3,
+  cellClassName,
   orientation = 'horizontal',
 }: NumericMatrixProps) {
   const values = orientation === 'vertical' ? rows.map((row) => row.slice(0, 1)) : rows;
@@ -29,7 +31,7 @@ export default function NumericMatrix({
           {values.map((row, rowIndex) => (
             <tr key={rowIndex}>
               {row.map((value, columnIndex) => (
-                <td key={columnIndex}>{value.toFixed(precision)}</td>
+                <td key={columnIndex} className={cellClassName?.(rowIndex, columnIndex)}>{value.toFixed(precision)}</td>
               ))}
             </tr>
           ))}

@@ -16,7 +16,7 @@
   pointer-events: auto;
   overflow-wrap: anywhere;
 }
-.tooltip strong { color: var(--color-text-heading); }
+.tooltip strong:not([class*="pca-"]) { color: var(--color-text-heading); }
 .tooltip p { margin: 5px 0; }
 .tooltip table { width: 100%; border-collapse: collapse; margin: 6px 0; }
 .tooltip th, .tooltip td { padding: 2px 4px; text-align: right; font-variant-numeric: tabular-nums; }

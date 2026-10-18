@@ -1,3 +1,4 @@
+import { axisClass, axisTex, quantityClass } from '../quantityColors';
 import ComponentDetails from '../ComponentDetails';
 import PointDetails from '../PointDetails';
 import { BlockMath } from '../../../components/Math/KatexRenderer';
@@ -14,13 +15,13 @@ interface Props {
   result: PcaResult;
 }
 
-const ARROW_COLORS = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b'];
+const ARROW_COLORS = ['#b63227', '#805e00', '#006b80', '#f59e0b'];
 
 export default function StepEigen({ rawData, variableNames, result }: Props) {
   const is2D = variableNames.length === 2;
   const is3D = variableNames.length >= 3;
   const componentLabels = result.eigenvalues.map((_, i) => `CP${i + 1}`);
-  const roundedEigenvalues = result.eigenvalues.map((value) => Number(value.toFixed(3)).toFixed(3));
+  const roundedEigenvalues = result.eigenvalues.map((value, i) => axisTex(i, value.toFixed(3)));
 
   // Build arrows for eigenvectors (scaled by sqrt(eigenvalue) for visibility)
   const arrows2D: Arrow[] = is2D
@@ -74,14 +75,14 @@ export default function StepEigen({ rawData, variableNames, result }: Props) {
       <div className={styles.eigenGrid}>
         {result.eigenvectors.map((vec, i) => (
           <div key={i} className={styles.eigenCard} title={`CP${i + 1} : combinaison des variables réduites. Coefficients : ${vec.map((v, j) => `${variableNames[j]} : ${v.toFixed(4)}`).join('; ')}. Cumul : ${(result.cumulativeVariance[i] * 100).toFixed(2)} %. Le signe global peut être inversé.`}>
-            <h4 style={{ color: ARROW_COLORS[i] }}>
+            <h4><span className={axisClass(i)}>
               Composante {i + 1} — {'\u03BB'}{i + 1} = {result.eigenvalues[i].toFixed(3)}
               {' '}({(result.varianceExplained[i] * 100).toFixed(1)}%)
-            </h4>
+            </span></h4>
             <div className={styles.calculationFormula}>
-              <BlockMath math={`\\frac{${roundedEigenvalues[i]}}{${roundedEigenvalues.join(' + ')}}\\times 100\\approx ${(result.varianceExplained[i] * 100).toFixed(1)}\\%`} />
+              <BlockMath colorClasses math={`\\frac{${roundedEigenvalues[i]}}{${roundedEigenvalues.join(' + ')}}\\times 100\\approx ${axisTex(i, `${(result.varianceExplained[i] * 100).toFixed(1)}\\%`)}`} />
             </div>
-            <VectorDisplay vector={vec} label={`v_{${i + 1}}`} precision={3} />
+            <VectorDisplay vector={vec} entryClasses={variableNames.map((_, j) => quantityClass(j, 'coefficient'))} label={`v_{${i + 1}}`} precision={3} />
           </div>
         ))}
       </div>

@@ -50,3 +50,8 @@ Résultats de référence : INCA3 r = 0,476964, CP1 = 73,8482 %. PISA r maths/sc
 ### Infobulles pédagogiques
 
 Les nuages de l’échantillon affichent au survol et au clavier le numéro de ligne du tableau (pas un identifiant de l’enquête), les valeurs initiales et les coordonnées centrées ou réduites. Les vues des axes et des projections détaillent aussi chaque score CP comme somme des produits des coordonnées Z par les coefficients de l’axe. Les coefficients, valeurs propres, parts de variance et cumuls sont accessibles sur les flèches et l’éboulis, pour l’échantillon comme pour les données complètes. Les cellules de corrélation donnent la valeur à six décimales et le sens de la liaison ; les cellules de densité donnent les intervalles CP1/CP2 et leur masse pondérée, sans les présenter comme un individu. Les détails longs peuvent défiler dans l’infobulle ; Échap les ferme.
+
+
+### Couleurs des quantités
+
+Une teinte par variable suit X, X̃ et Z dans les tableaux, les vecteurs et les infobulles : bleu pour la première, violet pour la deuxième et vert pour la troisième. Le ton s’accentue de X à Z ; Z est aussi en gras et les coefficients des axes sont soulignés en pointillés. Les facteurs Zᵀ et Z de l’étape 4 conservent ces couleurs après transposition et substitution numérique. Les calculs de projection et les formules des axes sur les données complètes réutilisent les mêmes styles. Les axes CP ont leurs propres couleurs pour leurs scores et valeurs propres. La palette s’adapte au thème clair ou sombre ; les noms, symboles et une légende restent présents. Les formules KaTeX autorisent uniquement les classes de couleur ACP définies dans le code.
