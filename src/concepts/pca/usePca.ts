@@ -50,7 +50,6 @@ export function usePca() {
   const selectDataset = (index: number) => {
     if (!DATASETS[index]) return;
     setRequest((previous) => ({ ...previous, datasetIndex: index, version: previous.version + 1 }));
-    setStep(0);
   };
 
   const result: PcaResult | null = useMemo(() => {

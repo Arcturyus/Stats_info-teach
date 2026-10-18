@@ -60,3 +60,6 @@ Une teinte par variable suit X, X̃ et Z dans les tableaux, les vecteurs et les 
 ### Comparaison des repères et suivi des individus
 
 L’étape 6 montre les axes propres avant et après projection, dans les exemples à deux comme à trois variables. Les deux vues de comparaison partagent une échelle commune ; en 2D, les unités horizontales et verticales ont aussi la même longueur à l’écran. Les numéros correspondent aux lignes de l’échantillon et restent identiques dans tous les nuages de l’étape. Un survol ou un focus met en évidence le même individu dans les autres vues, y compris en 3D. Les numéros sont visibles par défaut jusqu’à 20 personnes, avec une case permettant de les afficher ou masquer ; le point survolé garde toujours son numéro. Les vues 3D projetées sont centrées à l’origine et leurs axes portent des graduations.
+
+
+La section « Vue 3D » contient directement deux nuages : « Données originales (normalisées) » et « Après projection (composantes principales) ». Le changement de jeu de données conserve l’étape active et recharge les données de cette étape.

@@ -120,31 +120,32 @@ export default function StepProjection({ rawData, variableNames, result }: Props
       {k >= 3 && (
         <div className={styles.comparison}>
           <h3>Vue 3D — CP1, CP2, CP3</h3>
-          <div className={styles.chartSection}>
-            <ScatterPlot3D
-              points={result.projectedData}
-              pointTooltip={pointTooltip}
-              pointLabels={pointLabels}
-              showPointLabels={showLabels}
-              highlightedIndex={highlightedIndex}
-              onPointHover={setHighlightedIndex}
-              xLabel="CP1"
-              yLabel="CP2"
-              zLabel="CP3"
-              axisColors={CP_COLORS}
-              originCenter
-            />
+          <p className={styles.note}>Avant et après le changement de repère : mêmes individus, même échelle et axes CP colorés.</p>
+          <div className={styles.splitView}>
+            <div className={styles.chartSection}>
+              <h4>Données originales (normalisées)</h4>
+              <ScatterPlot3D points={result.normalizedData} pointTooltip={pointTooltip}
+                xLabel={`Z(${variableNames[0]})`} yLabel={`Z(${variableNames[1]})`} zLabel={`Z(${variableNames[2]})`}
+                arrows={beforeAxes3D} originCenter symmetricExtent={extent}
+                pointLabels={pointLabels} showPointLabels={showLabels} highlightedIndex={highlightedIndex} onPointHover={setHighlightedIndex} />
+            </div>
+            <div className={styles.chartSection}>
+              <h4>Après projection (composantes principales)</h4>
+              <ScatterPlot3D points={result.projectedData} pointTooltip={pointTooltip}
+                xLabel="CP1" yLabel="CP2" zLabel="CP3" axisColors={CP_COLORS} originCenter symmetricExtent={extent}
+                pointLabels={pointLabels} showPointLabels={showLabels} highlightedIndex={highlightedIndex} onPointHover={setHighlightedIndex} />
+            </div>
           </div>
         </div>
       )}
 
-      {(is2D || k >= 3) && (
+      {is2D && (
         <div className={styles.comparison}>
           <h3>Comparaison : avant vs après</h3>
-          <p className={styles.note}>Les axes colorés montrent {is2D ? 'CP1 et CP2' : 'CP1, CP2 et CP3'} avant et après le changement de repère. Même échelle dans les deux vues : distances et angles sont conservés.</p>
-          {is2D ? <div className={styles.splitView}>
+          <p className={styles.note}>Les axes colorés montrent CP1 et CP2 avant et après le changement de repère. Même échelle dans les deux vues : distances et angles sont conservés.</p>
+          <div className={styles.splitView}>
             <div className={styles.chartSection}>
-              <h4>Donnees originales (normalisees)</h4>
+              <h4>Données originales (normalisées)</h4>
               <ScatterPlot2D
                 points={result.normalizedData}
                 pointTooltip={pointTooltip}
@@ -160,7 +161,7 @@ export default function StepProjection({ rawData, variableNames, result }: Props
               />
             </div>
             <div className={styles.chartSection}>
-              <h4>Apres projection (composantes principales)</h4>
+              <h4>Après projection (composantes principales)</h4>
               <ScatterPlot2D
                 points={points2D}
                 pointTooltip={pointTooltip}
@@ -175,21 +176,7 @@ export default function StepProjection({ rawData, variableNames, result }: Props
                 symmetricExtent={extent}
               />
             </div>
-          </div> : <div className={styles.splitView}>
-            <div className={styles.chartSection}>
-              <h4>Avant : données normalisées et directions CP1, CP2, CP3</h4>
-              <ScatterPlot3D points={result.normalizedData} pointTooltip={pointTooltip}
-                xLabel={`Z(${variableNames[0]})`} yLabel={`Z(${variableNames[1]})`} zLabel={`Z(${variableNames[2]})`}
-                arrows={beforeAxes3D} originCenter symmetricExtent={extent}
-                pointLabels={pointLabels} showPointLabels={showLabels} highlightedIndex={highlightedIndex} onPointHover={setHighlightedIndex} />
-            </div>
-            <div className={styles.chartSection}>
-              <h4>Après : coordonnées sur CP1, CP2, CP3</h4>
-              <ScatterPlot3D points={result.projectedData} pointTooltip={pointTooltip}
-                xLabel="CP1" yLabel="CP2" zLabel="CP3" axisColors={CP_COLORS} originCenter symmetricExtent={extent}
-                pointLabels={pointLabels} showPointLabels={showLabels} highlightedIndex={highlightedIndex} onPointHover={setHighlightedIndex} />
-            </div>
-          </div>}
+          </div>
         </div>
       )}
     </div>
