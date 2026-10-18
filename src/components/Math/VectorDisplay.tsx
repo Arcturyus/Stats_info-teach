@@ -1,4 +1,4 @@
-import { BlockMath } from 'react-katex';
+import NumericMatrix from './NumericMatrix';
 
 interface VectorDisplayProps {
   vector: number[];
@@ -8,14 +8,14 @@ interface VectorDisplayProps {
 }
 
 export default function VectorDisplay({ vector, label, precision = 3, horizontal = false }: VectorDisplayProps) {
-  const formatted = vector.map((v) => v.toFixed(precision));
-  const inner = horizontal
-    ? formatted.join(' & ')
-    : formatted.join(' \\\\ ');
-  const env = horizontal ? '\\begin{pmatrix}' : '\\begin{pmatrix}';
-  const latex = label
-    ? `${label} = ${env} ${inner} \\end{pmatrix}`
-    : `${env} ${inner} \\end{pmatrix}`;
+  const rows = horizontal ? [vector] : vector.map((value) => [value]);
 
-  return <BlockMath math={latex} />;
+  return (
+    <NumericMatrix
+      rows={rows}
+      label={label}
+      precision={precision}
+      orientation={horizontal ? 'horizontal' : 'vertical'}
+    />
+  );
 }
