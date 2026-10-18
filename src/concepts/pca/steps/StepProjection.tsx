@@ -1,12 +1,16 @@
+import { useCallback, useMemo, useState } from 'react';
+import ComponentDetails from '../ComponentDetails';
 import { axisClass, quantityClass } from '../quantityColors';
 import PointDetails from '../PointDetails';
 import { BlockMath } from '../../../components/Math/KatexRenderer';
-import ScatterPlot2D from '../../../components/Charts/ScatterPlot2D';
-import ScatterPlot3D from '../../../components/Charts/ScatterPlot3D';
+import ScatterPlot2D, { type Arrow } from '../../../components/Charts/ScatterPlot2D';
+import ScatterPlot3D, { type Arrow3D } from '../../../components/Charts/ScatterPlot3D';
 import MatrixDisplay from '../../../components/Math/MatrixDisplay';
 import EditableTable from '../../../components/EditableTable/EditableTable';
 import type { PcaResult } from '../types';
 import styles from './Steps.module.css';
+
+const CP_COLORS = ['#b63227', '#805e00', '#006b80'];
 
 interface Props {
   rawData: number[][];
@@ -15,6 +19,11 @@ interface Props {
 }
 
 export default function StepProjection({ rawData, variableNames, result }: Props) {
+  const [highlightedIndex, setHighlightedIndex] = useState<number | null>(null);
+  const [labelsOverride, setLabelsOverride] = useState<boolean | null>(null);
+  const showLabels = labelsOverride ?? rawData.length <= 20;
+  const pointLabels = useMemo(() => rawData.map((_, i) => String(i + 1)), [rawData]);
+  const pointTooltip = useCallback((index: number) => <PointDetails index={index} names={variableNames} raw={rawData[index]} result={result} stage="projection" />, [variableNames, rawData, result]);
   const is2D = variableNames.length === 2;
   const k = result.projectedData[0]?.length ?? 0;
 
@@ -30,7 +39,24 @@ export default function StepProjection({ rawData, variableNames, result }: Props
   }
 
   const cpLabels = Array.from({ length: k }, (_, i) => `CP${i + 1}`);
-  const points2D = result.projectedData.map((p) => [p[0], p[1]]);
+  const points2D = useMemo(() => result.projectedData.map((p) => [p[0], p[1]]), [result]);
+  // A shared scale and equal units in both directions preserve the geometry of the rotation.
+  const extent = Math.max(1, ...result.normalizedData.flat().map(Math.abs), ...result.projectedData.flat().map(Math.abs)) * 1.2;
+  const beforeAxes: Arrow[] = useMemo(() => result.eigenvectors.slice(0, 2).map((vec, i) => ({
+    dx: vec[0] * extent * .85, dy: vec[1] * extent * .85,
+    label: `CP${i + 1}`,
+    color: CP_COLORS[i], bidirectional: true,
+    tooltip: <ComponentDetails index={i} names={variableNames} vector={vec} eigenvalue={result.eigenvalues[i]} variance={result.varianceExplained[i]} cumulative={result.cumulativeVariance[i]} />,
+  })), [result, extent, variableNames]);
+  const afterAxes: Arrow[] = useMemo(() => beforeAxes.map((axis, i) => ({ ...axis,
+    dx: i === 0 ? extent * .85 : 0, dy: i === 1 ? extent * .85 : 0,
+  })), [beforeAxes, extent]);
+
+  const beforeAxes3D: Arrow3D[] = useMemo(() => result.eigenvectors.slice(0, 3).map((vec, i) => ({
+    dx: vec[0] * extent * .85, dy: vec[1] * extent * .85, dz: (vec[2] ?? 0) * extent * .85,
+    label: `CP${i + 1}`, color: CP_COLORS[i],
+    tooltip: <ComponentDetails index={i} names={variableNames} vector={vec} eigenvalue={result.eigenvalues[i]} variance={result.varianceExplained[i]} cumulative={result.cumulativeVariance[i]} />,
+  })), [result, extent, variableNames]);
 
   return (
     <div className={styles.step}>
@@ -45,6 +71,11 @@ export default function StepProjection({ rawData, variableNames, result }: Props
       <div className={styles.formula}>
         <BlockMath math="Y = Z \cdot P" />
       </div>
+
+      <label className={styles.note}>
+        <input type="checkbox" checked={showLabels} onChange={event => setLabelsOverride(event.target.checked)} /> Afficher les numéros des individus (mêmes numéros dans toutes les vues)
+      </label>
+      <p className={styles.note}>Survolez un point pour retrouver le même individu dans les autres graphiques. Les numéros correspondent aux lignes du tableau.</p>
 
       <div className={styles.infoBox}>
         <h4>Matrice de projection P</h4>
@@ -69,7 +100,11 @@ export default function StepProjection({ rawData, variableNames, result }: Props
           {k >= 2 ? (
             <ScatterPlot2D
               points={points2D}
-              pointTooltip={(index) => <PointDetails index={index} names={variableNames} raw={rawData[index]} result={result} stage="projection" />}
+              pointTooltip={pointTooltip}
+              pointLabels={pointLabels}
+              showPointLabels={showLabels}
+              highlightedIndex={highlightedIndex}
+              onPointHover={setHighlightedIndex}
               xLabel="CP1"
               yLabel="CP2"
               originCenter
@@ -88,26 +123,39 @@ export default function StepProjection({ rawData, variableNames, result }: Props
           <div className={styles.chartSection}>
             <ScatterPlot3D
               points={result.projectedData}
-              pointTooltip={(index) => <PointDetails index={index} names={variableNames} raw={rawData[index]} result={result} stage="projection" />}
+              pointTooltip={pointTooltip}
+              pointLabels={pointLabels}
+              showPointLabels={showLabels}
+              highlightedIndex={highlightedIndex}
+              onPointHover={setHighlightedIndex}
               xLabel="CP1"
               yLabel="CP2"
               zLabel="CP3"
+              axisColors={CP_COLORS}
+              originCenter
             />
           </div>
         </div>
       )}
 
-      {is2D && (
+      {(is2D || k >= 3) && (
         <div className={styles.comparison}>
-          <h3>Comparaison : avant vs apres</h3>
-          <div className={styles.splitView}>
+          <h3>Comparaison : avant vs après</h3>
+          <p className={styles.note}>Les axes colorés montrent {is2D ? 'CP1 et CP2' : 'CP1, CP2 et CP3'} avant et après le changement de repère. Même échelle dans les deux vues : distances et angles sont conservés.</p>
+          {is2D ? <div className={styles.splitView}>
             <div className={styles.chartSection}>
               <h4>Donnees originales (normalisees)</h4>
               <ScatterPlot2D
                 points={result.normalizedData}
-              pointTooltip={(index) => <PointDetails index={index} names={variableNames} raw={rawData[index]} result={result} stage="projection" />}
-                xLabel={variableNames[0]}
-                yLabel={variableNames[1]}
+                pointTooltip={pointTooltip}
+                pointLabels={pointLabels}
+                showPointLabels={showLabels}
+                highlightedIndex={highlightedIndex}
+                onPointHover={setHighlightedIndex}
+                xLabel={`Z(${variableNames[0]})`}
+                yLabel={`Z(${variableNames[1]})`}
+                arrows={beforeAxes}
+                symmetricExtent={extent}
                 originCenter
               />
             </div>
@@ -115,14 +163,33 @@ export default function StepProjection({ rawData, variableNames, result }: Props
               <h4>Apres projection (composantes principales)</h4>
               <ScatterPlot2D
                 points={points2D}
-              pointTooltip={(index) => <PointDetails index={index} names={variableNames} raw={rawData[index]} result={result} stage="projection" />}
+                pointTooltip={pointTooltip}
+                pointLabels={pointLabels}
+                showPointLabels={showLabels}
+                highlightedIndex={highlightedIndex}
+                onPointHover={setHighlightedIndex}
                 xLabel="CP1"
                 yLabel="CP2"
                 originCenter
-                colors={['#10b981']}
+                arrows={afterAxes}
+                symmetricExtent={extent}
               />
             </div>
-          </div>
+          </div> : <div className={styles.splitView}>
+            <div className={styles.chartSection}>
+              <h4>Avant : données normalisées et directions CP1, CP2, CP3</h4>
+              <ScatterPlot3D points={result.normalizedData} pointTooltip={pointTooltip}
+                xLabel={`Z(${variableNames[0]})`} yLabel={`Z(${variableNames[1]})`} zLabel={`Z(${variableNames[2]})`}
+                arrows={beforeAxes3D} originCenter symmetricExtent={extent}
+                pointLabels={pointLabels} showPointLabels={showLabels} highlightedIndex={highlightedIndex} onPointHover={setHighlightedIndex} />
+            </div>
+            <div className={styles.chartSection}>
+              <h4>Après : coordonnées sur CP1, CP2, CP3</h4>
+              <ScatterPlot3D points={result.projectedData} pointTooltip={pointTooltip}
+                xLabel="CP1" yLabel="CP2" zLabel="CP3" axisColors={CP_COLORS} originCenter symmetricExtent={extent}
+                pointLabels={pointLabels} showPointLabels={showLabels} highlightedIndex={highlightedIndex} onPointHover={setHighlightedIndex} />
+            </div>
+          </div>}
         </div>
       )}
     </div>

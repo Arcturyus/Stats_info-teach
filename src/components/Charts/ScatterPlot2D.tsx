@@ -9,6 +9,7 @@ export interface Arrow {
   label?: string;
   color?: string;
   tooltip?: ReactNode;
+  bidirectional?: boolean;
 }
 
 const EMPTY_ARROWS: Arrow[] = [];
@@ -24,6 +25,12 @@ interface ScatterPlot2DProps {
   colors?: string[];
   showGrid?: boolean;
   originCenter?: boolean;
+  /** Same extent and units per pixel for paired views. */
+  symmetricExtent?: number;
+  pointLabels?: string[];
+  showPointLabels?: boolean;
+  highlightedIndex?: number | null;
+  onPointHover?: (index: number | null) => void;
 }
 
 export default function ScatterPlot2D({
@@ -37,6 +44,11 @@ export default function ScatterPlot2D({
   colors,
   showGrid = true,
   originCenter = false,
+  symmetricExtent,
+  pointLabels,
+  showPointLabels = false,
+  highlightedIndex,
+  onPointHover,
 }: ScatterPlot2DProps) {
   const markerId = useId().replace(/:/g, "");
   const { id, show, hide, tooltip } = useChartTooltip(points);
@@ -69,6 +81,12 @@ export default function ScatterPlot2D({
     } else {
       xExtent = [xExtent[0] - xPad, xExtent[1] + xPad];
       yExtent = [yExtent[0] - yPad, yExtent[1] + yPad];
+    }
+
+    if (symmetricExtent !== undefined) {
+      const unit = symmetricExtent / Math.min(innerW, innerH);
+      xExtent = [-unit * innerW, unit * innerW];
+      yExtent = [-unit * innerH, unit * innerH];
     }
 
     const xScale = d3.scaleLinear().domain(xExtent).range([0, innerW]);
@@ -159,19 +177,20 @@ export default function ScatterPlot2D({
         .attr('refY', 5)
         .attr('markerWidth', 6)
         .attr('markerHeight', 6)
-        .attr('orient', 'auto')
+        .attr('orient', 'auto-start-reverse')
         .append('path')
         .attr('d', 'M 0 0 L 10 5 L 0 10 z')
         .attr('fill', arrowColor);
 
       g.append('line')
-        .attr('x1', xScale(0))
-        .attr('y1', yScale(0))
+        .attr('x1', xScale(arrow.bidirectional ? -arrow.dx : 0))
+        .attr('y1', yScale(arrow.bidirectional ? -arrow.dy : 0))
         .attr('x2', xScale(arrow.dx))
         .attr('y2', yScale(arrow.dy))
         .attr('stroke', arrowColor)
         .attr('stroke-width', 2.5)
         .attr('marker-end', `url(#${markerId}-arrowhead-${i})`)
+        .attr('marker-start', arrow.bidirectional ? `url(#${markerId}-arrowhead-${i})` : null)
         .attr('tabindex', 0)
         .attr('aria-label', arrow.label ?? 'Axe principal')
         .attr('aria-describedby', id)
@@ -202,14 +221,43 @@ export default function ScatterPlot2D({
       .attr('fill-opacity', 0.8)
       .attr('stroke', 'white')
       .attr('stroke-width', 1.5)
+      .attr('data-point-index', (_, i) => i)
       .attr('tabindex', 0)
       .attr('aria-label', (d, i) => `Individu n° ${i + 1}, ${xLabel} : ${d[0]}, ${yLabel} : ${d[1]}`)
       .attr('aria-describedby', id)
+      .on('mouseenter', (_, d) => onPointHover?.(points.indexOf(d)))
       .on('mousemove', (event: MouseEvent, d) => { const i = points.indexOf(d); show(event.clientX, event.clientY, pointTooltip?.(i) ?? <><strong>Individu n° {i + 1}</strong><p>{xLabel} : {d[0].toFixed(3)}<br />{yLabel} : {d[1].toFixed(3)}</p></>); })
-      .on('mouseleave', hide)
-      .on('focus', function (_, d) { const box = this.getBoundingClientRect(); const i = points.indexOf(d); show(box.x, box.y, pointTooltip?.(i) ?? `Individu n° ${i + 1} : ${d.map(v => v.toFixed(3)).join(' ; ')}`); })
-      .on('blur', hide);
-  }, [points, arrows, width, height, xLabel, yLabel, colors, showGrid, originCenter, innerW, innerH, margin.left, margin.top, pointTooltip, id, show, hide, markerId]);
+      .on('mouseleave', () => { hide(); onPointHover?.(null); })
+      .on('focus', function (_, d) { const box = this.getBoundingClientRect(); const i = points.indexOf(d); onPointHover?.(i); show(box.x, box.y, pointTooltip?.(i) ?? `Individu n° ${i + 1} : ${d.map(v => v.toFixed(3)).join(' ; ')}`); })
+      .on('blur', () => { hide(); onPointHover?.(null); });
+
+    if (pointLabels) {
+      g.append('g').selectAll('text').data(points).join('text')
+        .attr('data-point-label', (_, i) => i)
+        .attr('x', d => xScale(d[0]) + 8)
+        .attr('y', d => yScale(d[1]) - 8)
+        .attr('fill', 'var(--color-text-heading)')
+        .attr('font-size', '11px')
+        .attr('stroke', 'var(--color-bg-card)')
+        .attr('stroke-width', 3)
+        .attr('paint-order', 'stroke')
+        .attr('pointer-events', 'none')
+        .text((_, i) => pointLabels[i]);
+    }
+  }, [points, arrows, width, height, xLabel, yLabel, colors, showGrid, originCenter, innerW, innerH, margin.left, margin.top, pointTooltip, id, show, hide, markerId, symmetricExtent, pointLabels, onPointHover]);
+
+  // Update the linked highlight without recreating points or losing hover/focus.
+  useEffect(() => {
+    const svg = d3.select(svgRef.current);
+    svg.selectAll<SVGCircleElement, number[]>('circle[data-point-index]')
+      .attr('r', (_, i) => i === highlightedIndex ? 8 : 5)
+      .attr('fill-opacity', (_, i) => highlightedIndex == null || i === highlightedIndex ? .8 : .3)
+      .attr('stroke', (_, i) => i === highlightedIndex ? 'var(--color-text-heading)' : 'white')
+      .attr('stroke-width', (_, i) => i === highlightedIndex ? 2.5 : 1.5);
+    svg.selectAll<SVGTextElement, number[]>('text[data-point-label]')
+      .attr('visibility', (_, i) => showPointLabels || i === highlightedIndex ? 'visible' : 'hidden')
+      .attr('font-weight', (_, i) => i === highlightedIndex ? 800 : 500);
+  }, [highlightedIndex, showPointLabels, points, arrows, pointLabels, symmetricExtent, width, height, xLabel, yLabel, colors, showGrid, originCenter, pointTooltip, onPointHover]);
 
   return (
     <div className={styles.container}>

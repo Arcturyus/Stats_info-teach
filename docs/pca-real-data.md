@@ -55,3 +55,8 @@ Les nuages de l’échantillon affichent au survol et au clavier le numéro de l
 ### Couleurs des quantités
 
 Une teinte par variable suit X, X̃ et Z dans les tableaux, les vecteurs et les infobulles : bleu pour la première, violet pour la deuxième et vert pour la troisième. Le ton s’accentue de X à Z ; Z est aussi en gras et les coefficients des axes sont soulignés en pointillés. Les facteurs Zᵀ et Z de l’étape 4 conservent ces couleurs après transposition et substitution numérique. Les calculs de projection et les formules des axes sur les données complètes réutilisent les mêmes styles. Les axes CP ont leurs propres couleurs pour leurs scores et valeurs propres. La palette s’adapte au thème clair ou sombre ; les noms, symboles et une légende restent présents. Les formules KaTeX autorisent uniquement les classes de couleur ACP définies dans le code.
+
+
+### Comparaison des repères et suivi des individus
+
+L’étape 6 montre les axes propres avant et après projection, dans les exemples à deux comme à trois variables. Les deux vues de comparaison partagent une échelle commune ; en 2D, les unités horizontales et verticales ont aussi la même longueur à l’écran. Les numéros correspondent aux lignes de l’échantillon et restent identiques dans tous les nuages de l’étape. Un survol ou un focus met en évidence le même individu dans les autres vues, y compris en 3D. Les numéros sont visibles par défaut jusqu’à 20 personnes, avec une case permettant de les afficher ou masquer ; le point survolé garde toujours son numéro. Les vues 3D projetées sont centrées à l’origine et leurs axes portent des graduations.

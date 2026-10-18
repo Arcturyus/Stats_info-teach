@@ -12,10 +12,17 @@ export interface Arrow3D {
 }
 
 const EMPTY_ARROWS: Arrow3D[] = [];
+const VARIABLE_AXIS_COLORS = ['#193e83', '#68245b', '#13513e'];
 
 interface ScatterPlot3DProps {
   points: number[][];
   pointTooltip?: (index: number) => ReactNode;
+  pointLabels?: string[];
+  showPointLabels?: boolean;
+  highlightedIndex?: number | null;
+  onPointHover?: (index: number | null) => void;
+  symmetricExtent?: number;
+  axisColors?: string[];
   xLabel?: string;
   yLabel?: string;
   zLabel?: string;
@@ -29,6 +36,12 @@ interface ScatterPlot3DProps {
 export default function ScatterPlot3D({
   points,
   pointTooltip,
+  pointLabels,
+  showPointLabels = false,
+  highlightedIndex,
+  onPointHover,
+  symmetricExtent,
+  axisColors = VARIABLE_AXIS_COLORS,
   xLabel = 'X',
   yLabel = 'Y',
   zLabel = 'Z',
@@ -52,6 +65,7 @@ export default function ScatterPlot3D({
     if (!canvas || points.length === 0) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+    const theme = getComputedStyle(canvas);
 
     ctx.clearRect(0, 0, width, height);
 
@@ -71,7 +85,7 @@ export default function ScatterPlot3D({
       const allAbsX = [...xs.map(Math.abs), ...arrows.map((a) => Math.abs(a.dx))];
       const allAbsY = [...ys.map(Math.abs), ...arrows.map((a) => Math.abs(a.dy))];
       const allAbsZ = [...zs.map(Math.abs), ...arrows.map((a) => Math.abs(a.dz))];
-      const maxAbs = Math.max(
+      const maxAbs = symmetricExtent ?? Math.max(
         Math.max(...allAbsX, 0),
         Math.max(...allAbsY, 0),
         Math.max(...allAbsZ, 0),
@@ -122,6 +136,17 @@ export default function ScatterPlot3D({
     const axisLen = 1.3;
     const drawCoordAxis = (ddx: number, ddy: number, ddz: number, color: string, label: string) => {
       const [ox, oy] = project(0, 0, 0);
+      if (originCenter) {
+        const [nx, ny] = project(-ddx, -ddy, -ddz);
+        ctx.beginPath(); ctx.moveTo(nx, ny); ctx.lineTo(ox, oy);
+        ctx.strokeStyle = color; ctx.lineWidth = 1; ctx.setLineDash([4, 4]); ctx.stroke(); ctx.setLineDash([]);
+        const range = ddx ? xRange : ddy ? yRange : zRange;
+        for (const t of [-1, .5, 1]) {
+          const [tx, ty] = project(ddx * t, ddy * t, ddz * t);
+          ctx.beginPath(); ctx.arc(tx, ty, 2, 0, Math.PI * 2); ctx.fillStyle = color; ctx.fill();
+          ctx.font = '10px sans-serif'; ctx.fillText((t * range / 2).toFixed(1), tx + 4, ty + 12);
+        }
+      }
       const [ex, ey] = project(ddx * axisLen, ddy * axisLen, ddz * axisLen);
       ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(ex, ey);
       ctx.strokeStyle = color; ctx.lineWidth = 2.5; ctx.stroke();
@@ -135,9 +160,9 @@ export default function ScatterPlot3D({
       ctx.fillText(label, ex + 6, ey + 4);
     };
 
-    drawCoordAxis(1, 0, 0, '#ef4444', xLabel);
-    drawCoordAxis(0, 1, 0, '#10b981', yLabel);
-    drawCoordAxis(0, 0, 1, '#3b82f6', zLabel);
+    drawCoordAxis(1, 0, 0, axisColors[0], xLabel);
+    drawCoordAxis(0, 1, 0, axisColors[1], yLabel);
+    drawCoordAxis(0, 0, 1, axisColors[2], zLabel);
 
     // Origin dot
     const [ox, oy] = project(0, 0, 0);
@@ -178,16 +203,23 @@ export default function ScatterPlot3D({
     projected.forEach(({ sx, sy, i }) => {
       hits.current.push({ sx, sy, index: i });
       const color = colors ? colors[i % colors.length] : '#6366f1';
-      ctx.beginPath(); ctx.arc(sx, sy, 5.5, 0, Math.PI * 2);
-      ctx.fillStyle = color; ctx.globalAlpha = 0.82; ctx.fill();
+      const selected = i === highlightedIndex;
+      ctx.beginPath(); ctx.arc(sx, sy, selected ? 8 : 5.5, 0, Math.PI * 2);
+      ctx.fillStyle = color; ctx.globalAlpha = highlightedIndex == null || selected ? .82 : .3; ctx.fill();
       ctx.globalAlpha = 1;
-      ctx.strokeStyle = 'white'; ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.strokeStyle = selected ? theme.getPropertyValue('--color-text-heading') : 'white'; ctx.lineWidth = selected ? 2.5 : 1.5; ctx.stroke();
+      if (pointLabels && (showPointLabels || selected)) {
+        ctx.font = `${selected ? 'bold ' : ''}11px sans-serif`;
+        ctx.lineWidth = 3; ctx.strokeStyle = theme.getPropertyValue('--color-bg-card');
+        ctx.strokeText(pointLabels[i], sx + 9, sy - 8);
+        ctx.fillStyle = theme.getPropertyValue('--color-text-heading'); ctx.fillText(pointLabels[i], sx + 9, sy - 8);
+      }
     });
 
     ctx.fillStyle = 'rgba(150,150,150,0.7)';
     ctx.font = '11px sans-serif';
     ctx.fillText('Cliquer-glisser pour tourner', 8, height - 8);
-  }, [points, arrows, rotX, rotY, xLabel, yLabel, zLabel, colors, originCenter, width, height]);
+  }, [points, arrows, rotX, rotY, xLabel, yLabel, zLabel, colors, originCenter, width, height, pointLabels, showPointLabels, highlightedIndex, symmetricExtent, axisColors]);
 
   useEffect(() => { draw(); }, [draw]);
 
@@ -204,7 +236,8 @@ export default function ScatterPlot3D({
       const y = (e.clientY - box.top) * height / box.height;
       // Reverse painter order: coincident points select the visible foreground one.
       const hit = [...hits.current].reverse().find(p => Math.hypot(p.sx - x, p.sy - y) <= 12);
-      if (!hit) { hide(); return; }
+      if (!hit) { hide(); onPointHover?.(null); return; }
+      onPointHover?.(hit.arrow ? null : hit.index);
       const content = hit.arrow ? (arrows[hit.index].tooltip ?? arrows[hit.index].label) : (pointTooltip?.(hit.index) ?? <><strong>Individu n° {hit.index + 1}</strong><p>{[xLabel, yLabel, zLabel].map((label, j) => `${label} : ${points[hit.index][j].toFixed(3)}`).join(' · ')}</p></>);
       show(e.clientX, e.clientY, content);
       return;
@@ -224,13 +257,14 @@ export default function ScatterPlot3D({
         role="img"
         aria-label={`Nuage 3D : ${xLabel}, ${yLabel}, ${zLabel}. Flèches gauche et droite : parcourir les individus ; Échap : fermer les détails.`}
         aria-describedby={id}
-        onBlur={hide}
-        onFocus={(event) => { const box = event.currentTarget.getBoundingClientRect(); keyboardIndex.current = 0; show(box.x + box.width / 2, box.y + box.height / 2, pointTooltip?.(0) ?? `Individu n° 1 : ${points[0]?.join(' ; ')}`); }}
+        onBlur={() => { hide(); onPointHover?.(null); }}
+        onFocus={(event) => { const box = event.currentTarget.getBoundingClientRect(); keyboardIndex.current = 0; onPointHover?.(0); show(box.x + box.width / 2, box.y + box.height / 2, pointTooltip?.(0) ?? `Individu n° 1 : ${points[0]?.join(' ; ')}`); }}
         onKeyDown={(event) => {
           if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
           event.preventDefault();
           keyboardIndex.current = (keyboardIndex.current + (event.key === 'ArrowRight' ? 1 : -1) + points.length) % points.length;
           const index = keyboardIndex.current;
+          onPointHover?.(index);
           const hit = hits.current.find(h => !h.arrow && h.index === index);
           const box = event.currentTarget.getBoundingClientRect();
           show(box.x + (hit?.sx ?? width / 2) * box.width / width, box.y + (hit?.sy ?? height / 2) * box.height / height, pointTooltip?.(index) ?? `Individu n° ${index + 1} : ${points[index].join(' ; ')}`);
@@ -242,7 +276,7 @@ export default function ScatterPlot3D({
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
-        onMouseLeave={() => { handleMouseUp(); hide(); }}
+        onMouseLeave={() => { handleMouseUp(); hide(); onPointHover?.(null); }}
       />
     </div>
   );
