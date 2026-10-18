@@ -1,6 +1,6 @@
 .datasetSelector {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: var(--space-md);
   margin-bottom: var(--space-xl);
   flex-wrap: wrap;
@@ -28,9 +28,35 @@
 }
 
 .datasetDesc {
+  margin: 0;
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
   font-style: italic;
+}
+
+.datasetInfo {
+  flex-basis: 100%;
+  display: grid;
+  gap: var(--space-xs);
+}
+
+.datasetMethodNote {
+  margin: 0;
+  max-width: 100ch;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  line-height: 1.55;
+}
+
+.datasetSources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm) var(--space-md);
+  font-size: var(--font-size-xs);
+}
+
+.datasetSources a {
+  color: var(--color-primary);
 }
 
 .historyNote {

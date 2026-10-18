@@ -22,6 +22,7 @@ const STEPS = [
 
 export function Component() {
   const pca = usePca();
+  const selectedDataset = DATASETS[pca.datasetIndex]!;
 
   const renderStep = () => {
     if (!pca.result) {
@@ -82,9 +83,21 @@ export function Component() {
             </option>
           ))}
         </select>
-        <span className={styles.datasetDesc}>
-          {DATASETS[pca.datasetIndex].description}
-        </span>
+        <div className={styles.datasetInfo}>
+          <p className={styles.datasetDesc}>{selectedDataset.description}</p>
+          {selectedDataset.methodNote && (
+            <p className={styles.datasetMethodNote}>{selectedDataset.methodNote}</p>
+          )}
+          {selectedDataset.sources && (
+            <div className={styles.datasetSources}>
+              {selectedDataset.sources.map((source) => (
+                <a key={source.url} href={source.url} target="_blank" rel="noopener noreferrer">
+                  {source.label}
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <StepNavigator

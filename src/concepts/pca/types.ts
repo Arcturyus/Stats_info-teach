@@ -3,6 +3,8 @@ export interface PcaDataset {
   description: string;
   variableNames: string[];
   data: number[][];
+  methodNote?: string;
+  sources?: { label: string; url: string }[];
 }
 
 export interface PcaResult {
