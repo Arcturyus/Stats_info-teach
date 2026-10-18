@@ -1,0 +1,33 @@
+# ACP sur les données individuelles
+
+Les étapes 4, 5 et 6 affichent, après l’exemple pédagogique, des résultats calculés sur les fichiers individuels officiels. Ces résultats fixes sont indépendants des dix lignes éditables.
+
+## Reproduction
+
+```powershell
+python -m pip install -r scripts/requirements-pca.txt
+python scripts/prepare_pca_real_data.py
+```
+
+Le script télécharge les fichiers dans `.cache/pca` (ignoré par Git). Le fichier élèves PISA compressé représente environ 682 Mo et son extraction nécessite plusieurs Go libres. Seuls `public/data/pca/inca3.json` et `pisa2022.json`, contenant les résultats agrégés, sont embarqués dans le site. Les identifiants et lignes individuelles ne sont pas publiés. Chaque sortie conserve l’URL, le SHA-256 de la source et les effectifs exclus.
+
+## Sources et populations
+
+- **INCA3, Anses** : [fichier individuel et documentation](https://www.data.gouv.fr/datasets/donnees-de-consommations-et-habitudes-alimentaires-de-letude-inca-3), [notice d’utilisation](https://static.data.gouv.fr/resources/donnees-de-consommations-et-habitudes-alimentaires-de-letude-inca-3/20210128-192017/notice-utilisateurs-donnees-inca3-data.gouvjanv21.pdf). Adultes de 18–79 ans, France métropolitaine hors Corse, enquête 2014–2015. Parmi les 3 157 adultes, 3 144 ont une taille, un poids et un poids d’enquête valides ; les 13 autres sont exclus. Variables finales `taille`, `poids` (mesurées ou déclarées selon le protocole). Poids `pond_indiv_adu_pop1`. La présentation de l’enquête et du redressement figure dans « Sources et méthode de calcul » du site.
+- **PISA 2022, OCDE** : [base officielle](https://www.oecd.org/en/data/datasets/pisa-2022-database.html), [archive élèves SPSS](https://webfs.oecd.org/pisa2022/STU_QQQ_SPSS.zip), [consignes d’analyse](https://www.oecd.org/en/about/programmes/pisa/how-to-prepare-and-analyse-the-pisa-database.html). Le fichier international téléchargé comporte 613 744 élèves et 80 codes pays/économies distincts. Tous ont les 30 valeurs plausibles et un poids `W_FSTUWT` positif : aucune exclusion supplémentaire. Les trois domaines sont mathématiques, sciences, compréhension de l’écrit. Il s’agit des effectifs du fichier public utilisé, pas d’un effectif annoncé pour l’enquête entière.
+
+## Calcul
+
+Pour chaque jeu X et les poids normalisés a = w / somme(w) : moyenne μ = somme(aX), covariance C = (X−μ)ᵀ diag(a) (X−μ), écarts types s = racine(diag(C)), puis Rᵢⱼ = Cᵢⱼ / (sᵢsⱼ). L’ACP est donc centrée et réduite, sur la corrélation pondérée.
+
+Pour PISA, ce calcul est répété séparément sur PV1 à PV10. R est la moyenne des dix matrices de corrélation, puis cette matrice est diagonalisée. Ce choix décrit les axes de la corrélation moyenne ; il ne prétend pas être une procédure d’inférence officielle OCDE pour l’ACP. Aucun score individuel moyen des dix valeurs plausibles n’est utilisé. Les poids finaux donnent davantage de contribution aux populations d’élèves plus nombreuses : ce résultat international combine variations entre pays et au sein des pays. Il ne représente pas la moyenne OCDE des corrélations nationales.
+
+Les valeurs propres sont triées par ordre décroissant ; les vecteurs propres unitaires sont stockés en lignes. Le coefficient de plus grande valeur absolue est orienté positivement pour fixer le signe. Les parts de variance sont λ / somme(λ). Les interprétations sont descriptives, sans conclusion causale. Aucun intervalle de confiance ou test de significativité n’est fourni : les poids de réplication ne sont pas exploités ici.
+
+La projection utilise tous les individus : grille de densité 56 × 56 sur CP1 et CP2, avec étendue complète des scores. Chaque observation contribue selon son poids, sans sous-échantillonnage ni suppression des extrêmes. PISA : centrage/réduction séparés pour chaque valeur plausible, projection sur les axes communs de R moyen, puis moyenne des dix densités. La masse est ramenée à N pour le stockage et convertie en pourcentages dans le graphique ; N ne compte jamais un élève dix fois.
+
+## Contrôles
+
+Le script vérifie l’unicité des identifiants, la symétrie et la diagonale de R, la positivité des valeurs propres, l’orthonormalité des axes, la reconstruction de R, la somme des parts de variance et la conservation de la masse de la projection. Les moyennes INCA3 obtenues (168,764 cm et 73,618 kg) concordent avec les arrondis du rapport Anses (168,8 cm et 73,6 kg).
+
+Résultats de référence : INCA3 r = 0,476964, CP1 = 73,8482 %. PISA r maths/sciences = 0,891427, maths/écrit = 0,843779, sciences/écrit = 0,853090 ; CP1 = 90,8566 %, CP1+CP2 = 96,3980 %.

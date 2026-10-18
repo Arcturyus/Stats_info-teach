@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Public survey downloads and Python processing dependencies (not site assets)
+.cache/pca/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

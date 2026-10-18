@@ -1,0 +1,31 @@
+.section {
+  margin-top: var(--space-2xl);
+  padding-top: var(--space-xl);
+  border-top: 2px solid var(--color-primary);
+  min-width: 0;
+}
+.section h2 { color: var(--color-text-heading); font-size: var(--font-size-xl); margin-bottom: var(--space-sm); }
+.section h3 { margin: var(--space-lg) 0 var(--space-md); }
+.section p { line-height: 1.65; margin-bottom: var(--space-md); }
+.population, .muted { color: var(--color-text-muted); font-size: var(--font-size-sm); }
+.count { display: inline-block; background: var(--color-bg-card); border: 1px solid var(--color-border); padding: .4rem .8rem; border-radius: var(--radius-sm); }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 310px), 1fr)); gap: var(--space-xl); }
+.grid > div { min-width: 0; }
+.chart { max-width: 100%; overflow-x: auto; }
+.tableWrap { overflow-x: auto; margin: var(--space-md) 0; }
+.axes { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.axes caption { text-align: left; margin-bottom: .75rem; font-weight: 600; }
+.axes th, .axes td { border-bottom: 1px solid var(--color-border); padding: .75rem; text-align: right; }
+.axes th { overflow-wrap: anywhere; }
+.axes th:first-child { text-align: left; white-space: nowrap; }
+.axes thead { background: var(--color-bg-card); }
+.formulas { padding: var(--space-md); background: var(--color-bg-card); border-left: 3px solid var(--color-primary); overflow-wrap: anywhere; }
+.formulas p:last-child { margin-bottom: 0; }
+.interpretation { line-height: 1.65; padding-left: 1.4rem; }
+.interpretation li { margin-bottom: .5rem; }
+.density { margin: 0; max-width: 740px; }
+.density svg { display: block; width: 100%; height: auto; }
+.density figcaption { color: var(--color-text-muted); font-size: var(--font-size-sm); line-height: 1.6; }
+.methods { margin-top: var(--space-lg); font-size: var(--font-size-sm); }
+.methods summary { cursor: pointer; color: var(--color-primary); margin-bottom: var(--space-md); }
+.methods a { color: var(--color-primary); }

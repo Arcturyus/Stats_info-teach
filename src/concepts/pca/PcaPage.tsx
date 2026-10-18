@@ -8,6 +8,7 @@ import StepNormalized from './steps/StepNormalized';
 import StepCorrelation from './steps/StepCorrelation';
 import StepEigen from './steps/StepEigen';
 import StepProjection from './steps/StepProjection';
+import RealDataSection from './RealDataSection';
 import styles from './PcaPage.module.css';
 import acpGenesImg from '../../assets/ACP_genes_europes_2008.jpg';
 
@@ -98,6 +99,8 @@ export function Component() {
       />
 
       {renderStep()}
+
+      {pca.step >= 3 && <RealDataSection datasetIndex={pca.datasetIndex} step={pca.step} />}
 
       <div className={styles.caseStudy}>
         <h2>Application : la génétique des populations européennes (2008)</h2>
