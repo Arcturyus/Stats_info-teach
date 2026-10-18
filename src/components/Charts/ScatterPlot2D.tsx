@@ -31,6 +31,7 @@ interface ScatterPlot2DProps {
   showPointLabels?: boolean;
   highlightedIndex?: number | null;
   onPointHover?: (index: number | null) => void;
+  showProjectionGuides?: boolean;
 }
 
 export default function ScatterPlot2D({
@@ -49,10 +50,12 @@ export default function ScatterPlot2D({
   showPointLabels = false,
   highlightedIndex,
   onPointHover,
+  showProjectionGuides = false,
 }: ScatterPlot2DProps) {
   const markerId = useId().replace(/:/g, "");
   const { id, show, hide, tooltip } = useChartTooltip(points);
   const svgRef = useRef<SVGSVGElement>(null);
+  const scalesRef = useRef<{ x: d3.ScaleLinear<number, number>; y: d3.ScaleLinear<number, number> } | null>(null);
   const margin = { top: 20, right: 30, bottom: 45, left: 55 };
   const innerW = width - margin.left - margin.right;
   const innerH = height - margin.top - margin.bottom;
@@ -91,6 +94,7 @@ export default function ScatterPlot2D({
 
     const xScale = d3.scaleLinear().domain(xExtent).range([0, innerW]);
     const yScale = d3.scaleLinear().domain(yExtent).range([innerH, 0]);
+    scalesRef.current = { x: xScale, y: yScale };
 
     const g = svg
       .append('g')
@@ -210,6 +214,7 @@ export default function ScatterPlot2D({
       }
     });
 
+    g.append('g').attr('data-projection-guides', '');
     // Points
     g.selectAll<SVGCircleElement, number[]>('circle')
       .data(points)
@@ -257,7 +262,20 @@ export default function ScatterPlot2D({
     svg.selectAll<SVGTextElement, number[]>('text[data-point-label]')
       .attr('visibility', (_, i) => showPointLabels || i === highlightedIndex ? 'visible' : 'hidden')
       .attr('font-weight', (_, i) => i === highlightedIndex ? 800 : 500);
-  }, [highlightedIndex, showPointLabels, points, arrows, pointLabels, symmetricExtent, width, height, xLabel, yLabel, colors, showGrid, originCenter, pointTooltip, onPointHover]);
+    const guides = svg.select('g[data-projection-guides]');
+    guides.selectAll('*').remove();
+    const scales = scalesRef.current;
+    if (showProjectionGuides && highlightedIndex != null && points[highlightedIndex] && scales) {
+      const [x, y] = points[highlightedIndex];
+      for (const [a, b, color] of [
+        [[scales.x(x), scales.y(0)], [scales.x(x), scales.y(y)], '#805e00'],
+        [[scales.x(0), scales.y(y)], [scales.x(x), scales.y(y)], '#b63227'],
+      ] as [number[], number[], string][]) {
+        guides.append('line').attr('x1', a[0]).attr('y1', a[1]).attr('x2', b[0]).attr('y2', b[1])
+          .attr('stroke', color).attr('stroke-width', 1.5).attr('stroke-dasharray', '4,4');
+      }
+    }
+  }, [highlightedIndex, showPointLabels, points, arrows, pointLabels, symmetricExtent, width, height, xLabel, yLabel, colors, showGrid, originCenter, pointTooltip, onPointHover, showProjectionGuides]);
 
   return (
     <div className={styles.container}>

@@ -1,6 +1,7 @@
 import { useRef, useEffect, useState, useCallback, type ReactNode } from 'react';
 import { useChartTooltip } from './useChartTooltip';
 import styles from './ScatterPlot3D.module.css';
+import { projectOntoPrincipalPlane } from '../../concepts/pca/projectionGeometry';
 
 export interface Arrow3D {
   dx: number;
@@ -14,6 +15,11 @@ export interface Arrow3D {
 const EMPTY_ARROWS: Arrow3D[] = [];
 const VARIABLE_AXIS_COLORS = ['#193e83', '#68245b', '#13513e'];
 
+export interface ProjectionPlane3D {
+  basis: [number[], number[]];
+  extent: number;
+}
+
 interface ScatterPlot3DProps {
   points: number[][];
   pointTooltip?: (index: number) => ReactNode;
@@ -23,6 +29,7 @@ interface ScatterPlot3DProps {
   onPointHover?: (index: number | null) => void;
   symmetricExtent?: number;
   axisColors?: string[];
+  projectionPlane?: ProjectionPlane3D;
   xLabel?: string;
   yLabel?: string;
   zLabel?: string;
@@ -42,6 +49,7 @@ export default function ScatterPlot3D({
   onPointHover,
   symmetricExtent,
   axisColors = VARIABLE_AXIS_COLORS,
+  projectionPlane,
   xLabel = 'X',
   yLabel = 'Y',
   zLabel = 'Z',
@@ -117,6 +125,30 @@ export default function ScatterPlot3D({
 
     const projectData = (x: number, y: number, z: number): [number, number, number] =>
       project(norm(x, xMin, xRange), norm(y, yMin, yRange), norm(z, zMin, zRange));
+
+    // This plane is expressed in the original standardized coordinates, not in screen coordinates.
+    if (projectionPlane) {
+      const { basis, extent } = projectionPlane;
+      const inPlane = (a: number, b: number) => {
+        const value = basis[0].map((coefficient, j) => a * coefficient + b * basis[1][j]);
+        return projectData(value[0], value[1], value[2]);
+      };
+      const corners = [[-extent, -extent], [extent, -extent], [extent, extent], [-extent, extent]].map(([a, b]) => inPlane(a, b));
+      ctx.beginPath();
+      corners.forEach(([x, y], i) => i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y));
+      ctx.closePath(); ctx.fillStyle = 'rgba(99,102,241,.13)'; ctx.fill();
+      ctx.strokeStyle = 'rgba(99,102,241,.55)'; ctx.lineWidth = 1.3; ctx.stroke();
+      ctx.strokeStyle = 'rgba(99,102,241,.22)'; ctx.lineWidth = .8;
+      for (let i = -2; i <= 2; i++) {
+        const t = i / 3 * extent;
+        for (const ends of [[[t, -extent], [t, extent]], [[-extent, t], [extent, t]]]) {
+          const a = inPlane(ends[0][0], ends[0][1]), b = inPlane(ends[1][0], ends[1][1]);
+          ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+        }
+      }
+      ctx.fillStyle = theme.getPropertyValue('--color-text-heading'); ctx.font = 'bold 12px sans-serif';
+      ctx.fillText('Plan CP1–CP2', corners[3][0] + 5, corners[3][1] - 8);
+    }
 
     // Grid on floor plane (y = yMin mapped to -1)
     const gridLines = 4;
@@ -216,10 +248,42 @@ export default function ScatterPlot3D({
       }
     });
 
+    if (projectionPlane && highlightedIndex != null && points[highlightedIndex]) {
+      const point = points[highlightedIndex];
+      const { foot, firstComponent, distance } = projectOntoPrincipalPlane(point, projectionPlane.basis);
+      const source = projectData(point[0], point[1], point[2]);
+      const target = projectData(foot[0], foot[1], foot[2]);
+      const first = projectData(firstComponent[0], firstComponent[1], firstComponent[2]);
+      const origin = projectData(0, 0, 0);
+      // Resolve the foot within the CP1–CP2 plane, then show the orthogonal residual.
+      ctx.setLineDash([4, 4]); ctx.lineWidth = 2;
+      ctx.strokeStyle = '#b63227'; ctx.beginPath(); ctx.moveTo(origin[0], origin[1]); ctx.lineTo(first[0], first[1]); ctx.stroke();
+      ctx.strokeStyle = '#805e00'; ctx.beginPath(); ctx.moveTo(first[0], first[1]); ctx.lineTo(target[0], target[1]); ctx.stroke();
+      ctx.strokeStyle = theme.getPropertyValue('--color-text-heading');
+      ctx.beginPath(); ctx.moveTo(source[0], source[1]); ctx.lineTo(target[0], target[1]); ctx.stroke(); ctx.setLineDash([]);
+      if (distance > 1e-8) {
+        const size = Math.min(distance / 4, projectionPlane.extent * .05);
+        const alongPlane = projectionPlane.basis[0].map(value => value * size);
+        const normal = point.map((value, j) => (value - foot[j]) / distance * size);
+        const corner = [
+          foot.map((value, j) => value + alongPlane[j]),
+          foot.map((value, j) => value + alongPlane[j] + normal[j]),
+          foot.map((value, j) => value + normal[j]),
+        ].map(value => projectData(value[0], value[1], value[2]));
+        ctx.beginPath(); corner.forEach(([x, y], i) => i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y));
+        ctx.lineWidth = 1.3; ctx.stroke();
+      }
+      ctx.beginPath(); ctx.arc(target[0], target[1], 7, 0, Math.PI * 2);
+      ctx.fillStyle = '#6366f1'; ctx.fill(); ctx.strokeStyle = theme.getPropertyValue('--color-bg-card'); ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = theme.getPropertyValue('--color-text-heading'); ctx.font = 'bold 12px sans-serif';
+      ctx.fillText(`${pointLabels?.[highlightedIndex] ?? highlightedIndex + 1}′`, target[0] + 10, target[1] + 15);
+      hits.current.push({ sx: target[0], sy: target[1], index: highlightedIndex });
+    }
+
     ctx.fillStyle = 'rgba(150,150,150,0.7)';
     ctx.font = '11px sans-serif';
     ctx.fillText('Cliquer-glisser pour tourner', 8, height - 8);
-  }, [points, arrows, rotX, rotY, xLabel, yLabel, zLabel, colors, originCenter, width, height, pointLabels, showPointLabels, highlightedIndex, symmetricExtent, axisColors]);
+  }, [points, arrows, rotX, rotY, xLabel, yLabel, zLabel, colors, originCenter, width, height, pointLabels, showPointLabels, highlightedIndex, symmetricExtent, axisColors, projectionPlane]);
 
   useEffect(() => { draw(); }, [draw]);
 
@@ -255,7 +319,7 @@ export default function ScatterPlot3D({
         ref={canvasRef}
         tabIndex={0}
         role="img"
-        aria-label={`Nuage 3D : ${xLabel}, ${yLabel}, ${zLabel}. Flèches gauche et droite : parcourir les individus ; Échap : fermer les détails.`}
+        aria-label={`Nuage 3D : ${xLabel}, ${yLabel}, ${zLabel}.${projectionPlane ? ' Plan CP1–CP2 et projection orthogonale de l’individu survolé.' : ''} Flèches gauche et droite : parcourir les individus ; Échap : fermer les détails.`}
         aria-describedby={id}
         onBlur={() => { hide(); onPointHover?.(null); }}
         onFocus={(event) => { const box = event.currentTarget.getBoundingClientRect(); keyboardIndex.current = 0; onPointHover?.(0); show(box.x + box.width / 2, box.y + box.height / 2, pointTooltip?.(0) ?? `Individu n° 1 : ${points[0]?.join(' ; ')}`); }}

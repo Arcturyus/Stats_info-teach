@@ -1,10 +1,11 @@
+import { projectOntoPrincipalPlane } from '../projectionGeometry';
 import { useCallback, useMemo, useState } from 'react';
 import ComponentDetails from '../ComponentDetails';
 import { axisClass, quantityClass } from '../quantityColors';
 import PointDetails from '../PointDetails';
 import { BlockMath } from '../../../components/Math/KatexRenderer';
 import ScatterPlot2D, { type Arrow } from '../../../components/Charts/ScatterPlot2D';
-import ScatterPlot3D, { type Arrow3D } from '../../../components/Charts/ScatterPlot3D';
+import ScatterPlot3D, { type Arrow3D, type ProjectionPlane3D } from '../../../components/Charts/ScatterPlot3D';
 import MatrixDisplay from '../../../components/Math/MatrixDisplay';
 import EditableTable from '../../../components/EditableTable/EditableTable';
 import type { PcaResult } from '../types';
@@ -23,6 +24,7 @@ export default function StepProjection({ rawData, variableNames, result }: Props
   const [labelsOverride, setLabelsOverride] = useState<boolean | null>(null);
   const showLabels = labelsOverride ?? rawData.length <= 20;
   const pointLabels = useMemo(() => rawData.map((_, i) => String(i + 1)), [rawData]);
+  const planePointLabels = useMemo(() => pointLabels.map(label => `${label}′`), [pointLabels]);
   const pointTooltip = useCallback((index: number) => <PointDetails index={index} names={variableNames} raw={rawData[index]} result={result} stage="projection" />, [variableNames, rawData, result]);
   const is2D = variableNames.length === 2;
   const k = result.projectedData[0]?.length ?? 0;
@@ -57,6 +59,12 @@ export default function StepProjection({ rawData, variableNames, result }: Props
     label: `CP${i + 1}`, color: CP_COLORS[i],
     tooltip: <ComponentDetails index={i} names={variableNames} vector={vec} eigenvalue={result.eigenvalues[i]} variance={result.varianceExplained[i]} cumulative={result.cumulativeVariance[i]} />,
   })), [result, extent, variableNames]);
+
+  const projectionPlane = useMemo<ProjectionPlane3D>(() => ({
+    basis: [result.eigenvectors[0], result.eigenvectors[1]], extent,
+  }), [result, extent]);
+  const selectedProjection = highlightedIndex != null && result.normalizedData[highlightedIndex]
+    ? projectOntoPrincipalPlane(result.normalizedData[highlightedIndex], projectionPlane.basis) : null;
 
   return (
     <div className={styles.step}>
@@ -119,23 +127,28 @@ export default function StepProjection({ rawData, variableNames, result }: Props
 
       {k >= 3 && (
         <div className={styles.comparison}>
-          <h3>Vue 3D — CP1, CP2, CP3</h3>
-          <p className={styles.note}>Avant et après le changement de repère : mêmes individus, même échelle et axes CP colorés.</p>
+          <h3>Projection du nuage 3D sur le plan CP1–CP2</h3>
+          <p className={styles.note}>À gauche : axes des disciplines, axes CP et plan CP1–CP2. Au survol, le segment en pointillés relie l’individu à sa projection orthogonale sur le plan. À droite : les coordonnées de ce point projeté en 2D ; CP3 est écartée.</p>
           <div className={styles.splitView}>
             <div className={styles.chartSection}>
               <h4>Données originales (normalisées)</h4>
               <ScatterPlot3D points={result.normalizedData} pointTooltip={pointTooltip}
                 xLabel={`Z(${variableNames[0]})`} yLabel={`Z(${variableNames[1]})`} zLabel={`Z(${variableNames[2]})`}
-                arrows={beforeAxes3D} originCenter symmetricExtent={extent}
+                arrows={beforeAxes3D} projectionPlane={projectionPlane} originCenter symmetricExtent={extent}
                 pointLabels={pointLabels} showPointLabels={showLabels} highlightedIndex={highlightedIndex} onPointHover={setHighlightedIndex} />
             </div>
             <div className={styles.chartSection}>
-              <h4>Après projection (composantes principales)</h4>
-              <ScatterPlot3D points={result.projectedData} pointTooltip={pointTooltip}
-                xLabel="CP1" yLabel="CP2" zLabel="CP3" axisColors={CP_COLORS} originCenter symmetricExtent={extent}
-                pointLabels={pointLabels} showPointLabels={showLabels} highlightedIndex={highlightedIndex} onPointHover={setHighlightedIndex} />
+              <h4>Après projection : plan CP1–CP2 en 2D</h4>
+              <ScatterPlot2D points={points2D} pointTooltip={pointTooltip}
+                xLabel="CP1" yLabel="CP2" arrows={afterAxes} originCenter symmetricExtent={extent} showProjectionGuides
+                pointLabels={planePointLabels} showPointLabels={showLabels} highlightedIndex={highlightedIndex} onPointHover={setHighlightedIndex} />
             </div>
           </div>
+          <p className={styles.note}>Le plan conserve {(result.cumulativeVariance[1] * 100).toFixed(1)} % de la variance. Dans la vue 3D, le point n′ est le pied de la projection de l’individu n. Les segments colorés dans le plan montrent ses composantes selon CP1 et CP2.</p>
+          {selectedProjection && highlightedIndex != null && <p className={styles.note} aria-live="polite">
+            Individu {highlightedIndex + 1} → point {highlightedIndex + 1}′ : CP1 = {selectedProjection.scores[0].toFixed(3)}, CP2 = {selectedProjection.scores[1].toFixed(3)}.
+            {' '}Distance au plan = {selectedProjection.distance.toFixed(3)} (valeur absolue de CP3).
+          </p>}
         </div>
       )}
 
