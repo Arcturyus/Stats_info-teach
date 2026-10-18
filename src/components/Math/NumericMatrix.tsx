@@ -1,4 +1,4 @@
-import { InlineMath } from 'react-katex';
+import { InlineMath } from './KatexRenderer';
 
 interface NumericMatrixProps {
   rows: number[][];

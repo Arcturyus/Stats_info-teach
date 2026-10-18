@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { BlockMath, InlineMath } from 'react-katex';
+import { BlockMath, InlineMath } from '../../../components/Math/KatexRenderer';
 import Slider from '../../../components/Slider/Slider';
 import DistributionChart, { type ChartSeries } from '../../../components/Charts/DistributionChart';
 import { buildGrid, normalPdf, uniformPdf } from '../entropyMath';

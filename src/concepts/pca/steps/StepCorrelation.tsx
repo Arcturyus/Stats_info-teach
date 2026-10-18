@@ -1,4 +1,4 @@
-import { BlockMath } from 'react-katex';
+import { BlockMath } from '../../../components/Math/KatexRenderer';
 import MatrixDisplay from '../../../components/Math/MatrixDisplay';
 import Heatmap from '../../../components/Charts/Heatmap';
 import type { PcaResult } from '../types';

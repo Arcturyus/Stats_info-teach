@@ -1,4 +1,4 @@
-import { BlockMath } from 'react-katex';
+import { BlockMath } from '../../../components/Math/KatexRenderer';
 import ScatterPlot2D, { type Arrow } from '../../../components/Charts/ScatterPlot2D';
 import ScatterPlot3D, { type Arrow3D } from '../../../components/Charts/ScatterPlot3D';
 import BarChart from '../../../components/Charts/BarChart';

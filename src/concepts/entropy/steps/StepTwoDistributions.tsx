@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { BlockMath } from 'react-katex';
+import { BlockMath } from '../../../components/Math/KatexRenderer';
 import Slider from '../../../components/Slider/Slider';
 import DistributionChart, { type ChartSeries } from '../../../components/Charts/DistributionChart';
 import {

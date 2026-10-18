@@ -1,4 +1,4 @@
-import { BlockMath } from 'react-katex';
+import { BlockMath } from '../../../components/Math/KatexRenderer';
 import EditableTable from '../../../components/EditableTable/EditableTable';
 import ScatterPlot2D from '../../../components/Charts/ScatterPlot2D';
 import ScatterPlot3D from '../../../components/Charts/ScatterPlot3D';
