@@ -1,4 +1,3 @@
-import { useRef, useEffect } from 'react';
 import * as d3 from 'd3';
 import styles from './Heatmap.module.css';
 
@@ -6,93 +5,71 @@ interface HeatmapProps {
   matrix: number[][];
   labels: string[];
   width?: number;
-  height?: number;
   precision?: number;
 }
 
-export default function Heatmap({
-  matrix,
-  labels,
-  width = 400,
-  height = 400,
-  precision = 3,
-}: HeatmapProps) {
-  const svgRef = useRef<SVGSVGElement>(null);
-  const margin = { top: 40, right: 20, bottom: 20, left: 60 };
-  const innerW = width - margin.left - margin.right;
-  const innerH = height - margin.top - margin.bottom;
+// A correlation keeps the same colour across datasets and after editing a value.
+const colorScale = d3.scaleSequential(d3.interpolateRdBu).domain([1, -1]).clamp(true);
+const ticks = [-1, -0.5, 0, 0.5, 1];
+const gradient = `linear-gradient(to right, ${Array.from({ length: 21 }, (_, i) => colorScale(-1 + i / 10)).join(', ')})`;
 
-  useEffect(() => {
-    if (!svgRef.current || matrix.length === 0) return;
+function textColor(background: string): string {
+  const { r, g, b } = d3.rgb(background);
+  const channels = [r, g, b].map((value) => {
+    const channel = value / 255;
+    return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+  });
+  const luminance = 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+  return luminance < 0.179 ? '#fff' : '#000';
+}
 
-    const svg = d3.select(svgRef.current);
-    svg.selectAll('*').remove();
-
-    const n = matrix.length;
-    const cellW = innerW / n;
-    const cellH = innerH / n;
-
-    const allVals = matrix.flat();
-    const colorScale = d3
-      .scaleSequential(d3.interpolateRdBu)
-      .domain([d3.max(allVals) || 1, d3.min(allVals) || -1]);
-
-    const g = svg
-      .append('g')
-      .attr('transform', `translate(${margin.left},${margin.top})`);
-
-    // Cells
-    for (let i = 0; i < n; i++) {
-      for (let j = 0; j < n; j++) {
-        g.append('rect')
-          .attr('x', j * cellW)
-          .attr('y', i * cellH)
-          .attr('width', cellW - 1)
-          .attr('height', cellH - 1)
-          .attr('fill', colorScale(matrix[i][j]))
-          .attr('rx', 3);
-
-        g.append('text')
-          .attr('x', j * cellW + cellW / 2)
-          .attr('y', i * cellH + cellH / 2)
-          .attr('text-anchor', 'middle')
-          .attr('dominant-baseline', 'central')
-          .attr('fill', Math.abs(matrix[i][j]) > 0.5 ? 'white' : 'var(--color-text)')
-          .attr('font-size', '12px')
-          .attr('font-weight', '500')
-          .text(matrix[i][j].toFixed(precision));
-      }
-    }
-
-    // Top labels
-    g.selectAll('.topLabel')
-      .data(labels)
-      .join('text')
-      .attr('x', (_, i) => i * cellW + cellW / 2)
-      .attr('y', -10)
-      .attr('text-anchor', 'middle')
-      .attr('fill', 'var(--color-text)')
-      .attr('font-size', '13px')
-      .attr('font-weight', '600')
-      .text((d) => d);
-
-    // Left labels
-    g.selectAll('.leftLabel')
-      .data(labels)
-      .join('text')
-      .attr('x', -10)
-      .attr('y', (_, i) => i * cellH + cellH / 2)
-      .attr('text-anchor', 'end')
-      .attr('dominant-baseline', 'central')
-      .attr('fill', 'var(--color-text)')
-      .attr('font-size', '13px')
-      .attr('font-weight', '600')
-      .text((d) => d);
-  }, [matrix, labels, width, height, precision, innerW, innerH, margin.left, margin.top]);
+export default function Heatmap({ matrix, labels, width = 480, precision = 3 }: HeatmapProps) {
+  if (matrix.length === 0) return null;
 
   return (
-    <div className={styles.container}>
-      <svg ref={svgRef} width={width} height={height} />
-    </div>
+    <figure className={styles.container} style={{ maxWidth: width }}>
+      <table className={styles.matrix} aria-label="Heatmap des corrélations" lang="fr">
+        <colgroup>
+          <col style={{ width: '30%' }} />
+          <col span={matrix.length} />
+        </colgroup>
+        <thead>
+          <tr>
+            <td />
+            {labels.map((label, index) => (
+              <th key={index} scope="col" className={styles.columnLabel}>{label}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {matrix.map((row, i) => (
+            <tr key={i}>
+              <th scope="row" className={styles.rowLabel}>{labels[i]}</th>
+              {row.map((value, j) => {
+                const background = colorScale(value);
+                return (
+                  <td key={j} className={styles.cell}>
+                    <div
+                      className={styles.value}
+                      style={{ background, color: textColor(background) }}
+                      title={`${labels[i]} / ${labels[j]} : ${value.toFixed(precision)}`}
+                    >
+                      {value.toFixed(precision)}
+                    </div>
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <figcaption className={styles.legend} aria-label="Échelle fixe des corrélations de −1 à 1">
+        <span className={styles.legendTitle}>Corrélation</span>
+        <div className={styles.gradient} style={{ background: gradient }} />
+        <div className={styles.ticks}>
+          {ticks.map((value) => <span key={value}>{value.toLocaleString('fr-FR')}</span>)}
+        </div>
+      </figcaption>
+    </figure>
   );
 }
