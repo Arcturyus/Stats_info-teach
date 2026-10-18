@@ -9,6 +9,7 @@ import StepCorrelation from './steps/StepCorrelation';
 import StepEigen from './steps/StepEigen';
 import StepProjection from './steps/StepProjection';
 import RealDataSection from './RealDataSection';
+import SamplingControls from './SamplingControls';
 import styles from './PcaPage.module.css';
 import acpGenesImg from '../../assets/ACP_genes_europes_2008.jpg';
 
@@ -99,6 +100,13 @@ export function Component() {
         currentStep={pca.step}
         onStepChange={pca.setStep}
       />
+
+      {pca.step > 0 && (
+        <div className={styles.redrawBar}>
+          <span>Échantillon</span>
+          <SamplingControls sampleSize={pca.sampleSize} loading={pca.loading} onDrawSample={pca.drawSample} />
+        </div>
+      )}
 
       {renderStep()}
 

@@ -71,13 +71,6 @@
 
 .dataHeader { display: flex; align-items: center; gap: var(--space-lg); flex-wrap: wrap; margin-bottom: var(--space-md); }
 .dataHeader h3 { margin: 0; }
-.drawControls { display: flex; align-items: center; gap: var(--space-sm); flex-wrap: wrap; }
-.drawControls label { font-weight: 600; white-space: nowrap; }
-.drawControls input { width: 5rem; padding: var(--space-sm); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg-card); color: var(--color-text); font: inherit; }
-.drawControls button { padding: var(--space-sm) var(--space-md); border: 1px solid var(--color-primary); border-radius: var(--radius-sm); background: var(--color-primary); color: white; font: inherit; cursor: pointer; }
-.drawControls button:disabled { opacity: .6; cursor: wait; }
-.drawControls :focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
-.sampleRange { color: var(--color-text-muted); font-size: var(--font-size-sm); }
 
 .chartSection {
   display: flex;

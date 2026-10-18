@@ -40,6 +40,8 @@
 }
 
 .sampleNote { flex-basis: 100%; color: var(--color-text-muted); font-size: var(--font-size-sm); margin: 0; }
+.redrawBar { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-lg); margin-bottom: var(--space-lg); }
+.redrawBar > span { font-weight: 600; }
 .datasetSelector select { max-width: 100%; }
 
 .historyNote {

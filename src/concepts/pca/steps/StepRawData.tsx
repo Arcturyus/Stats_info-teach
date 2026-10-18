@@ -1,9 +1,8 @@
-import { useState } from 'react';
 import { BlockMath } from '../../../components/Math/KatexRenderer';
 import EditableTable from '../../../components/EditableTable/EditableTable';
 import ScatterPlot2D from '../../../components/Charts/ScatterPlot2D';
 import ScatterPlot3D from '../../../components/Charts/ScatterPlot3D';
-import { MAX_SAMPLE_SIZE } from '../sampleSurvey';
+import SamplingControls from '../SamplingControls';
 import styles from './Steps.module.css';
 
 interface Props {
@@ -17,9 +16,6 @@ interface Props {
 }
 
 export default function StepRawData({ rawData, variableNames, onDataChange, onDrawSample, sampleSize, loading, error }: Props) {
-  const [draftSize, setDraftSize] = useState(String(sampleSize));
-  const requestedSize = Number(draftSize);
-  const validSize = Number.isInteger(requestedSize) && requestedSize >= 2 && requestedSize <= MAX_SAMPLE_SIZE;
   const is2D = variableNames.length === 2;
   const is3D = variableNames.length >= 3;
 
@@ -37,19 +33,7 @@ export default function StepRawData({ rawData, variableNames, onDataChange, onDr
 
       <div className={styles.dataHeader}>
         <h3>Matrice des donnees X</h3>
-        <form className={styles.drawControls} onSubmit={(event) => {
-          event.preventDefault();
-          if (validSize && !loading) onDrawSample(requestedSize);
-        }}>
-          <label htmlFor="pca-sample-size">n =</label>
-          <input id="pca-sample-size" type="number" min={2} max={MAX_SAMPLE_SIZE} step={1} required
-            aria-label="Nombre de personnes à tirer" aria-describedby="pca-sample-range"
-            value={draftSize} onChange={(event) => setDraftSize(event.target.value)} disabled={loading} />
-          <button type="submit" disabled={loading}>
-            {loading ? 'Tirage en cours…' : `Piocher ${validSize ? requestedSize : '…'} personnes au hasard`}
-          </button>
-          <span id="pca-sample-range" className={styles.sampleRange}>2 à {MAX_SAMPLE_SIZE.toLocaleString('fr-FR')} personnes</span>
-        </form>
+        <SamplingControls sampleSize={sampleSize} loading={loading} onDrawSample={onDrawSample} />
       </div>
 
       {loading && <p role="status">Chargement du tirage…</p>}
