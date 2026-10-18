@@ -17,6 +17,7 @@ export default function StepEigen({ variableNames, result }: Props) {
   const is2D = variableNames.length === 2;
   const is3D = variableNames.length >= 3;
   const componentLabels = result.eigenvalues.map((_, i) => `CP${i + 1}`);
+  const roundedEigenvalues = result.eigenvalues.map((value) => Number(value.toFixed(3)).toFixed(3));
 
   // Build arrows for eigenvectors (scaled by sqrt(eigenvalue) for visibility)
   const arrows2D: Arrow[] = is2D
@@ -57,6 +58,14 @@ export default function StepEigen({ variableNames, result }: Props) {
         <BlockMath math="\det(R - \lambda I) = 0" />
       </div>
 
+      <p className={styles.description}>
+        La part de variance d’un axe est sa valeur propre divisée par la somme des valeurs propres.
+        On multiplie par 100 pour obtenir un pourcentage.
+      </p>
+      <div className={styles.calculationFormula}>
+        <BlockMath math="\mathrm{Part}_i=\frac{\lambda_i}{\lambda_1+\cdots+\lambda_p}\times 100\%" />
+      </div>
+
       <div className={styles.eigenGrid}>
         {result.eigenvectors.map((vec, i) => (
           <div key={i} className={styles.eigenCard}>
@@ -64,10 +73,15 @@ export default function StepEigen({ variableNames, result }: Props) {
               Composante {i + 1} — {'\u03BB'}{i + 1} = {result.eigenvalues[i].toFixed(3)}
               {' '}({(result.varianceExplained[i] * 100).toFixed(1)}%)
             </h4>
+            <div className={styles.calculationFormula}>
+              <BlockMath math={`\\frac{${roundedEigenvalues[i]}}{${roundedEigenvalues.join(' + ')}}\\times 100\\approx ${(result.varianceExplained[i] * 100).toFixed(1)}\\%`} />
+            </div>
             <VectorDisplay vector={vec} label={`v_{${i + 1}}`} precision={3} />
           </div>
         ))}
       </div>
+
+      <p className={styles.note}>Valeurs affichées arrondies ; pourcentages calculés avec les valeurs propres non arrondies.</p>
 
       <div className={styles.splitView}>
         <div className={styles.chartSection}>

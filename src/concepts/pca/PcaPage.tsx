@@ -92,7 +92,7 @@ export function Component() {
           {pca.sampleInfo && <> · {pca.sampleInfo.populationSize.toLocaleString('fr-FR')} {pca.datasetIndex === 0 ? 'adultes' : 'élèves'}</>}.
         </p>
         {pca.sampleInfo?.plausibleValue && <p className={styles.sampleNote}>Scores en points PISA · jeu de valeurs plausibles n° {pca.sampleInfo.plausibleValue}, conservé pendant la visite.</p>}
-        <p className={styles.sampleNote}>Tirage uniforme sans remise · ACP de l’échantillon sans pondération. Enquête complète aux étapes 4 à 6.</p>
+        <p className={styles.sampleNote}>Tirage uniforme sans remise · ACP de l’échantillon sans pondération. Enquête complète aux étapes 2 à 6.</p>
       </div>
 
       <StepNavigator
@@ -110,7 +110,7 @@ export function Component() {
 
       {renderStep()}
 
-      {pca.step >= 3 && <RealDataSection datasetIndex={pca.datasetIndex} step={pca.step} />}
+      {pca.step >= 1 && <RealDataSection datasetIndex={pca.datasetIndex} step={pca.step} />}
 
       <div className={styles.caseStudy}>
         <h2>Application : la génétique des populations européennes (2008)</h2>

@@ -1,6 +1,6 @@
 # ACP sur les données individuelles
 
-Les lignes éditables proviennent d’un tirage aléatoire dans les données individuelles officielles, avec n = 10 par défaut. Les étapes 4, 5 et 6 affichent ensuite les résultats calculés sur les enquêtes complètes. Ces résultats fixes sont indépendants du tirage et des modifications du tableau.
+Les lignes éditables proviennent d’un tirage aléatoire dans les données individuelles officielles, avec n = 10 par défaut. Les étapes 2 à 6 affichent ensuite les résultats calculés sur les enquêtes complètes. L’étape 2 présente uniquement le vecteur des moyennes et l’étape 3 le vecteur des écarts-types, dans l’ordre des variables indiqué, avec les effectifs et les pondérations de la même population complète utilisée pour R. Les écarts-types portent sur les variables d’origine, avant réduction. PISA : chaque moyenne et chaque écart-type sont estimés séparément sur chaque jeu de valeurs plausibles, puis moyennés sur les dix jeux. Aucune matrice individuelle complète n’est affichée dans ces sections, et l’étape 1 ne comporte aucune section « Données réelles ». Ces résultats fixes sont indépendants du tirage et des modifications du tableau.
 
 ## Reproduction
 
@@ -27,6 +27,10 @@ On ne combine pas les domaines de jeux différents et on ne calcule pas de moyen
 - **PISA 2022, OCDE** : [base officielle](https://www.oecd.org/en/data/datasets/pisa-2022-database.html), [archive élèves SPSS](https://webfs.oecd.org/pisa2022/STU_QQQ_SPSS.zip), [consignes d’analyse](https://www.oecd.org/en/about/programmes/pisa/how-to-prepare-and-analyse-the-pisa-database.html). Le fichier international téléchargé comporte 613 744 élèves et 80 codes pays/économies distincts. Tous ont les 30 valeurs plausibles et un poids `W_FSTUWT` positif : aucune exclusion supplémentaire. Les trois domaines sont mathématiques, sciences, compréhension de l’écrit. Il s’agit des effectifs du fichier public utilisé, pas d’un effectif annoncé pour l’enquête entière.
 
 ## Calcul
+
+L’étape 4 détaille aussi le calcul sur l’échantillon courant dans la colonne à gauche de la heatmap : matrices Zᵀ et Z écrites avec les termes centrés X̃ᵢⱼ/σⱼ, écarts-types numériques, substitution numérique dépliable, produit ZᵀZ puis division par n pour obtenir R. Le coefficient R₁₂ est développé comme exemple. Au-delà de quatre personnes, les matrices et la somme affichent les deux premières personnes et la dernière, séparées par des points de suspension ; les calculs utilisent toujours toutes les personnes et la précision complète. Un tirage comportant une variable constante est signalé car la corrélation correspondante n’est pas définie.
+
+L’étape 5 explicite le pourcentage de variance par composante : λᵢ / somme(λ) × 100. Chaque carte substitue les valeurs propres du tirage courant dans cette fraction et affiche le pourcentage obtenu, calculé avant les arrondis d’affichage. La section sur l’enquête complète montre également la substitution numérique pour CP1.
 
 Pour chaque jeu X et les poids normalisés a = w / somme(w) : moyenne μ = somme(aX), covariance C = (X−μ)ᵀ diag(a) (X−μ), écarts types s = racine(diag(C)), puis Rᵢⱼ = Cᵢⱼ / (sᵢsⱼ). L’ACP est donc centrée et réduite, sur la corrélation pondérée.
 

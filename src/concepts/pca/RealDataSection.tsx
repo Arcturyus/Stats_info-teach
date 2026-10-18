@@ -1,6 +1,8 @@
 import { useEffect, useId, useState } from 'react';
 import { interpolateYlOrRd } from 'd3';
 import MatrixDisplay from '../../components/Math/MatrixDisplay';
+import VectorDisplay from '../../components/Math/VectorDisplay';
+import { BlockMath } from '../../components/Math/KatexRenderer';
 import Heatmap from '../../components/Charts/Heatmap';
 import BarChart from '../../components/Charts/BarChart';
 import styles from './RealDataSection.module.css';
@@ -9,6 +11,8 @@ interface RealReport {
   title: string;
   population: string;
   sampleSize: number;
+  means: number[];
+  standardDeviations: number[];
   variableNames: string[];
   method: string;
   axisInterpretations: string[];
@@ -44,7 +48,7 @@ function ProjectionDensity({ report }: { report: RealReport }) {
             y={plot.y + (bins - j - 1) / bins * plot.height}
             width={plot.width / bins + .1} height={plot.height / bins + .1}
             fill={interpolateYlOrRd(.08 + .92 * Math.log1p(mass) / Math.log1p(max))}>
-            <title>{number(mass / report.sampleSize * 100, 3)} % de la masse pondérée</title>
+            <title>{`${number(mass / report.sampleSize * 100, 3)} % de la masse pondérée`}</title>
           </rect>
         )))}
         <g stroke="var(--color-text-muted)" strokeDasharray="3 4" opacity=".55">
@@ -87,15 +91,29 @@ export default function RealDataSection({ datasetIndex, step }: { datasetIndex: 
     return () => controller.abort();
   }, [id]);
   const report = reports[id];
-  if (!report) return null;
+  if (!report || step < 1) return null;
   const labels = report.eigenvalues.map((_, i) => `CP${i + 1}`);
+  const roundedEigenvalues = report.eigenvalues.map((value) => Number(value.toFixed(3)).toFixed(3));
 
   return (
     <section className={styles.section} aria-label="ACP sur les données réelles">
       <h2>Données réelles · {report.title}</h2>
       <p className={styles.population}>{report.population}</p>
       <p><strong className={styles.count}>N = {number(report.sampleSize, 0)} personnes</strong></p>
-      <p>{report.method}</p>
+      <p>{step < 3 ? 'Statistiques pondérées calculées sur toutes les personnes retenues dans l’enquête.' : report.method}</p>
+
+      {(step === 1 || step === 2) && (
+        <>
+          <h3>{step === 1 ? 'Vecteur des moyennes' : 'Vecteur des écarts-types'}</h3>
+          <div className={styles.chart}>
+            <VectorDisplay vector={step === 1 ? report.means : report.standardDeviations}
+              label={step === 1 ? '\\bar{X}' : '\\sigma'} horizontal precision={3} />
+          </div>
+          <p className={styles.muted}>Ordre : {report.variableNames.join(' · ')}.</p>
+          {step === 2 && <p className={styles.muted}>Écarts-types des variables d’origine, avant réduction.</p>}
+          {id === 'pisa2022' && <p className={styles.muted}>Scores en points PISA. Chaque statistique est calculée séparément pour chacun des dix jeux de valeurs plausibles, puis moyennée.</p>}
+        </>
+      )}
 
       {step === 3 && (
         <div className={styles.grid}>
@@ -110,6 +128,9 @@ export default function RealDataSection({ datasetIndex, step }: { datasetIndex: 
           <h3>Variance expliquée et axes principaux</h3>
           <p>CP1 représente <strong>{number(report.varianceExplained[0] * 100)} %</strong> de la variance.
             {' '}Le plan CP1–CP2 en conserve <strong>{number(report.cumulativeVariance[1] * 100)} %</strong>.</p>
+          <div className={styles.chart}>
+            <BlockMath math={`\\frac{${roundedEigenvalues[0]}}{${roundedEigenvalues.join(' + ')}}\\times 100\\approx ${(report.varianceExplained[0] * 100).toFixed(1)}\\%`} />
+          </div>
           <div className={styles.chart}><BarChart values={report.varianceExplained} labels={labels} yLabel="Variance expliquée" showLine={{ data: report.cumulativeVariance, label: 'Cumul' }} /></div>
           <div className={styles.tableWrap}>
             <table className={styles.axes}>

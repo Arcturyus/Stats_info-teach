@@ -1,6 +1,7 @@
 import { BlockMath } from '../../../components/Math/KatexRenderer';
 import MatrixDisplay from '../../../components/Math/MatrixDisplay';
 import Heatmap from '../../../components/Charts/Heatmap';
+import CorrelationCalculation from './CorrelationCalculation';
 import type { PcaResult } from '../types';
 import styles from './Steps.module.css';
 
@@ -23,9 +24,12 @@ export default function StepCorrelation({ variableNames, result }: Props) {
         <BlockMath math="R = \frac{1}{n} Z^T Z" />
       </div>
 
-      <div className={styles.splitView}>
+      {result.stdDevs.some((value) => value === 0) ? (
+        <p role="status">Une variable est constante dans ce tirage : son écart-type est nul et ses corrélations ne sont pas définies. Modifiez les données ou piochez un nouvel échantillon.</p>
+      ) : <div className={styles.splitView}>
         <div className={styles.tableSection}>
           <h3>Matrice R</h3>
+          <CorrelationCalculation result={result} variableNames={variableNames} />
           <MatrixDisplay matrix={result.correlationMatrix} label="R" precision={3} />
         </div>
 
@@ -36,7 +40,7 @@ export default function StepCorrelation({ variableNames, result }: Props) {
             labels={variableNames}
           />
         </div>
-      </div>
+      </div>}
     </div>
   );
 }
